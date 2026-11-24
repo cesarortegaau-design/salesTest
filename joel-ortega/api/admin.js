@@ -4,12 +4,16 @@
 // POST /api/admin?accion=compartir    → { correo, libro, mensaje } comparte directo con cualquier correo registrado
 // POST /api/admin?accion=ajustes      → datos de la cooperación
 // POST /api/admin?accion=borrar-libro → { pathname } elimina un archivo de libro
+// POST /api/admin?accion=dedicar      → { correo, libro, dedicatoria, firma, guardarFirma } aprueba y dedica
+// POST /api/admin?accion=firma        → { firma } guarda la firma de Joel para reutilizarla
 import {
   json, error, sesion, leeJSON, guardaJSON, listaTodo, rutaSolicitud, rutaUsuario, normalizaCorreo,
-  LIBROS, ajustes, RUTA_AJUSTES, AJUSTES_BASE, cuerpoJSON, del,
+  LIBROS, ajustes, RUTA_AJUSTES, AJUSTES_BASE, cuerpoJSON, del, archivoLibro, RUTA_FIRMA,
 } from './_lib/core.js';
 
 const ESTADOS = ['aprobada', 'rechazada', 'por_validar', 'solicitada'];
+const MAX_FIRMA = 400 * 1024;
+const firmaValida = (f) => typeof f === 'string' && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(f) && f.length <= MAX_FIRMA;
 
 function admin(request) {
   const s = sesion(request);
@@ -29,8 +33,13 @@ export async function GET(request) {
     archivos[id] = (await listaTodo(`libros/${id}/`))
       .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
       .map((b) => ({ pathname: b.pathname, size: b.size, subido: b.uploadedAt }));
+    if (!archivos[id].length) {
+      const a = await archivoLibro(id);
+      if (a) archivos[id] = [{ pathname: a.pathname, size: a.size, subido: null, incluido: true }];
+    }
   }
-  return json({ solicitudes, usuarios, archivos, ajustes: await ajustes(), libros: LIBROS });
+  const firmaGuardada = (await leeJSON(RUTA_FIRMA))?.firma || '';
+  return json({ solicitudes, usuarios, archivos, ajustes: await ajustes(), libros: LIBROS, firmaGuardada });
 }
 
 export async function POST(request) {
@@ -40,10 +49,18 @@ export async function POST(request) {
   const b = await cuerpoJSON(request);
   const ahora = new Date().toISOString();
 
-  if (accion === 'estado' || accion === 'compartir') {
+  if (accion === 'firma') {
+    if (b.firma && !firmaValida(b.firma)) return error('Firma no válida.');
+    await guardaJSON(RUTA_FIRMA, { firma: b.firma || '', fecha: ahora });
+    return json({ ok: true });
+  }
+
+  if (accion === 'estado' || accion === 'compartir' || accion === 'dedicar') {
     const correo = normalizaCorreo(b.correo);
     if (!LIBROS[b.libro]) return error('Libro no válido.');
-    const estado = accion === 'compartir' ? 'aprobada' : b.estado;
+    const estado = accion === 'estado' ? b.estado : 'aprobada';
+    const dedica = accion === 'dedicar' || (estado === 'aprobada' && (b.dedicatoria !== undefined || b.firma !== undefined));
+    if (dedica && b.firma && !firmaValida(b.firma)) return error('La firma no es válida o es demasiado grande.');
     if (!ESTADOS.includes(estado)) return error('Estado no válido.');
     const usuario = await leeJSON(rutaUsuario(correo));
     if (!usuario) return error('Ese correo no tiene cuenta. Pídele que se registre primero.', 404);
@@ -62,8 +79,14 @@ export async function POST(request) {
       estado,
       mensajeJoel: typeof b.mensaje === 'string' ? b.mensaje.slice(0, 600) : previa?.mensajeJoel || '',
       actualizada: ahora,
-      historial: [...(previa?.historial || []), { fecha: ahora, evento: `${estado} por ${s.correo}` }].slice(-30),
+      historial: [...(previa?.historial || []), { fecha: ahora, evento: `${dedica ? 'dedicada y ' : ''}${estado} por ${s.soloAdmin ? 'Joel' : s.correo}` }].slice(-30),
     };
+    if (dedica) {
+      sol.dedicatoria = String(b.dedicatoria || '').trim().slice(0, 1200);
+      sol.firma = b.firma || '';
+      sol.dedicadaEn = ahora;
+      if (b.guardarFirma && b.firma) await guardaJSON(RUTA_FIRMA, { firma: b.firma, fecha: ahora });
+    }
     await guardaJSON(ruta, sol);
     return json({ ok: true, estado });
   }

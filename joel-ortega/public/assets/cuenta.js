@@ -60,9 +60,16 @@
         cuerpo += '<p class="ayuda">' + esc(e[1]) + ' · Actualizada el ' + fecha(s.actualizada) + (s.comprobante ? ' · Comprobante: ' + esc(s.comprobante.nombre) : '') + (s.monto ? ' · Cooperación: $' + Number(s.monto).toLocaleString('es-MX') : '') + '</p>';
         if (s.mensajeJoel) cuerpo += '<p style="border-left:4px solid var(--rojo);padding:8px 12px;background:var(--papel);margin:10px 0"><b>Joel:</b> ' + esc(s.mensajeJoel) + '</p>';
         if (s.estado === 'aprobada') {
+          if (s.dedicatoria || s.firma) {
+            cuerpo += '<div class="dedicatoria"><small>Dedicatoria de Joel</small>' +
+              (s.dedicatoria ? '<p class="manuscrita">' + esc(s.dedicatoria) + '</p>' : '') +
+              (s.firma ? '<img src="' + esc(s.firma) + '" alt="Firma de Joel Ortega Juárez">' : '') +
+              '<span>Joel Ortega Juárez' + (s.dedicadaEn ? ' · ' + fecha(s.dedicadaEn) : '') + '</span></div>';
+          }
           cuerpo += s.descargable
-            ? '<p><a class="btn btn--rojo" href="/api/descarga?libro=' + encodeURIComponent(id) + '">Descargar libro</a></p>'
-            : '<p class="ayuda">Joel está preparando el archivo. Vuelve pronto para descargarlo.</p>';
+            ? '<div class="acciones-libro"><a class="btn btn--rojo" href="/leer.html?libro=' + encodeURIComponent(id) + '">Leer en la plataforma</a>' +
+              '<a class="btn btn--linea" href="/api/descarga?libro=' + encodeURIComponent(id) + '">Descargar PDF' + (s.dedicatoria || s.firma ? ' dedicado' : '') + '</a></div>'
+            : '<p class="ayuda">Joel está preparando el archivo. Vuelve pronto para leerlo.</p>';
         }
       }
       var muestraForm = !s || s.estado !== 'aprobada';

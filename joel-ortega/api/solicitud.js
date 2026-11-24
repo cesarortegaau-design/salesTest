@@ -20,6 +20,10 @@ const publica = (s, hayArchivo) =>
     actualizada: s.actualizada,
     mensajeJoel: s.mensajeJoel || '',
     descargable: s.estado === 'aprobada' && hayArchivo,
+    dedicatoria: s.estado === 'aprobada' ? s.dedicatoria || '' : '',
+    firma: s.estado === 'aprobada' ? s.firma || '' : '',
+    dedicadaEn: s.estado === 'aprobada' ? s.dedicadaEn || null : null,
+    nombre: s.nombre || '',
   };
 
 export async function GET(request) {
@@ -82,6 +86,9 @@ export async function POST(request) {
     nota: nota || previa?.nota || '',
     comprobante,
     mensajeJoel: previa?.mensajeJoel || '',
+    dedicatoria: previa?.dedicatoria || '',
+    firma: previa?.firma || '',
+    dedicadaEn: previa?.dedicadaEn || null,
     creada: previa?.creada || ahora,
     actualizada: ahora,
     historial: [...(previa?.historial || []), { fecha: ahora, evento: comprobante && comprobante.fecha === ahora ? 'comprobante' : 'solicitud' }].slice(-30),

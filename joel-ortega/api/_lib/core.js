@@ -153,12 +153,16 @@ export async function ajustes() {
   return { ...AJUSTES_BASE, ...((await leeJSON(RUTA_AJUSTES)) || {}) };
 }
 
-// Último archivo subido por Joel para un libro
+// Archivo vigente de un libro: el último que Joel subió al almacén o, si no hay, el PDF incluido en el despliegue.
 export async function archivoLibro(libro) {
   const blobs = await listaTodo(`libros/${libro}/`);
   blobs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
-  return blobs[0] || null;
+  if (blobs[0]) return { ...blobs[0], origen: 'subido' };
+  const inc = LIBROS[libro]?.incluido;
+  if (inc) return { pathname: `incluido:${inc}`, size: LIBROS[libro].peso || null, uploadedAt: null, origen: 'incluido' };
+  return null;
 }
+export const RUTA_FIRMA = 'ajustes/firma.json';
 
 export async function cuerpoJSON(request) {
   try {
