@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel de Joel</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#c8102e">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;0,900;1,800;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<header class="barra">
+  <nav class="barra__nav wrap" aria-label="Principal">
+    <a href="/" class="marca"><b>JOEL ORTEGA</b><span>JUÁREZ</span></a>
+    <ul>
+      <li class="sec"><a href="/cuenta.html">Mi cuenta</a></li>
+      <li><button class="btn btn--rojo btn--sm" type="button" id="salir">Salir</button></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="cab-pagina">
+  <div class="wrap">
+    <p class="kicker kicker--claro">Panel de Joel</p>
+    <h1 class="titulo titulo--l titulo--claro">Solicitudes <span class="resalta">y cooperaciones</span></h1>
+    <p id="cab-texto">Valida comprobantes, comparte tus libros y sube los archivos.</p>
+  </div>
+</section>
+
+<main class="cuerpo-pagina">
+  <div class="wrap">
+    <div id="sin-permiso" class="tarjeta" hidden>
+      <h2>Acceso restringido</h2>
+      <p>Esta página es solo para Joel. <a class="enlace" href="/cuenta.html">Entra con tu cuenta</a>.</p>
+    </div>
+
+    <div id="panel" hidden>
+      <div class="metricas" id="metricas"></div>
+
+      <div class="tarjeta">
+        <h2>Solicitudes</h2>
+        <div class="filtros" id="filtros" role="group" aria-label="Filtrar por estado">
+          <button type="button" data-f="por_validar" aria-pressed="true">Por validar</button>
+          <button type="button" data-f="solicitada" aria-pressed="false">Sin comprobante</button>
+          <button type="button" data-f="aprobada" aria-pressed="false">Aprobadas</button>
+          <button type="button" data-f="rechazada" aria-pressed="false">No aprobadas</button>
+          <button type="button" data-f="todas" aria-pressed="false">Todas</button>
+        </div>
+        <div class="tabla-wrap">
+          <table>
+            <thead><tr><th>Persona</th><th>Libro</th><th>Cooperación</th><th>Comprobante</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="filas"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="rejilla-2">
+        <div class="tarjeta">
+          <h2>Compartir directo</h2>
+          <p>Envía un libro a alguien que ya tiene cuenta, aunque no haya cooperado.</p>
+          <form id="form-compartir" style="display:grid;gap:12px">
+            <div><label for="c-correo">Correo de la persona</label><input id="c-correo" type="email" required></div>
+            <div><label for="c-libro">Libro</label><select id="c-libro"></select></div>
+            <div><label for="c-msg">Mensaje (opcional)</label><input id="c-msg" maxlength="600"></div>
+            <button class="btn btn--negro" type="submit">Compartir libro</button>
+            <p class="estado" role="status" id="c-estado"></p>
+          </form>
+        </div>
+        <div class="tarjeta">
+          <h2>Archivos de los libros</h2>
+          <p>Sube el PDF o ePub que recibirán las personas aprobadas. Se entrega siempre el más reciente.</p>
+          <form id="form-archivo" style="display:grid;gap:12px">
+            <div><label for="s-libro">Libro</label><select id="s-libro"></select></div>
+            <div><label for="s-arch">Archivo (PDF, ePub o Word)</label><input id="s-arch" type="file" accept=".pdf,.epub,.docx,application/pdf,application/epub+zip" required></div>
+            <button class="btn btn--negro" type="submit">Subir archivo</button>
+            <p class="estado" role="status" id="s-estado"></p>
+          </form>
+          <div id="archivos" style="margin-top:14px"></div>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <h2>Datos de la cooperación</h2>
+        <p>Lo que ven las personas en su cuenta para hacer la transferencia.</p>
+        <form id="form-ajustes" style="display:grid;gap:12px">
+          <div class="rejilla-2" style="gap:12px">
+            <div><label for="j-monto">Monto sugerido (MXN)</label><input id="j-monto" name="montoSugerido" inputmode="decimal"></div>
+            <div><label for="j-banco">Banco</label><input id="j-banco" name="banco"></div>
+            <div><label for="j-titular">Titular</label><input id="j-titular" name="titular"></div>
+            <div><label for="j-clabe">CLABE</label><input id="j-clabe" name="clabe" inputmode="numeric"></div>
+            <div><label for="j-cuenta">Cuenta o tarjeta</label><input id="j-cuenta" name="cuenta"></div>
+            <div><label for="j-concepto">Concepto</label><input id="j-concepto" name="concepto"></div>
+          </div>
+          <div><label for="j-nota">Nota para quien coopera</label><textarea id="j-nota" name="nota"></textarea></div>
+          <div><button class="btn btn--negro" type="submit">Guardar datos</button></div>
+          <p class="estado" role="status" id="j-estado"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+<script type="module" src="/assets/admin.js"></script>
+</body>
+</html>

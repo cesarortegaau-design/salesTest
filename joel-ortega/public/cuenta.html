@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi cuenta · Joel Ortega Juárez</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#c8102e">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;0,900;1,800;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<header class="barra">
+  <nav class="barra__nav wrap" aria-label="Principal">
+    <a href="/" class="marca"><b>JOEL ORTEGA</b><span>JUÁREZ</span></a>
+    <ul>
+      <li class="sec"><a href="/#libros">Libros</a></li>
+      <li id="liga-admin" hidden><a href="/admin.html">Panel de Joel</a></li>
+      <li><button class="btn btn--rojo btn--sm" type="button" id="salir" hidden>Salir</button></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="cab-pagina">
+  <div class="wrap">
+    <p class="kicker kicker--claro">Mi cuenta</p>
+    <h1 class="titulo titulo--l titulo--claro">Tus <span class="resalta">libros</span></h1>
+    <p id="saludo">Cargando…</p>
+  </div>
+</section>
+
+<main class="cuerpo-pagina">
+  <div class="wrap">
+    <!-- Sin sesión -->
+    <div id="sin-sesion" class="rejilla-2" hidden>
+      <div class="tarjeta">
+        <h2>Entra o crea tu cuenta</h2>
+        <p>Solo necesitas un correo válido y una contraseña. Desde aquí cooperas, envías tu comprobante y descargas los libros que Joel te comparta.</p>
+        <p><button class="btn btn--rojo" type="button" data-acceso="registro">Crear cuenta</button> <button class="btn btn--linea" type="button" data-acceso="entrar">Entrar</button></p>
+      </div>
+    </div>
+
+    <!-- Con sesión -->
+    <div id="con-sesion" hidden>
+      <div class="rejilla-2">
+        <div class="tarjeta tarjeta--negra" id="coopera">
+          <p class="kicker kicker--claro">Cooperación</p>
+          <h2>Cómo cooperar</h2>
+          <p id="c-nota"></p>
+          <dl class="datos-banco" id="c-datos"></dl>
+          <p class="ayuda" style="color:#b9b0aa">Haz la transferencia desde tu banco y sube el comprobante en el libro que quieres recibir.</p>
+        </div>
+        <div class="tarjeta">
+          <p class="kicker">Así funciona</p>
+          <h2>Del comprobante al libro</h2>
+          <ol style="margin:0;padding-left:20px;display:grid;gap:8px">
+            <li><b>Solicita</b> el libro, con o sin cooperación.</li>
+            <li><b>Sube tu comprobante</b> de transferencia (foto o PDF, máximo 4 MB).</li>
+            <li><b>Joel lo valida</b>. El estado cambia a <span class="chip chip--aprobada">Aprobada</span>.</li>
+            <li><b>Descarga</b> el libro desde esta página cuando quieras.</li>
+          </ol>
+        </div>
+      </div>
+      <div id="lista-libros"></div>
+    </div>
+  </div>
+</main>
+
+<div class="modal" id="acceso" role="dialog" aria-modal="true" aria-labelledby="acceso-titulo" hidden>
+  <div class="modal__caja">
+    <button class="modal__cerrar" type="button" aria-label="Cerrar" data-cerrar>×</button>
+    <div class="modal__cab"><h2 id="acceso-titulo">Tu cuenta</h2><p>Solo necesitas un correo válido y una contraseña.</p></div>
+    <div class="pestanas" role="tablist">
+      <button type="button" role="tab" aria-selected="true" data-tab="registro">Crear cuenta</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="entrar">Entrar</button>
+    </div>
+    <form id="form-acceso" novalidate>
+      <div data-solo="registro"><label for="a-nombre">Nombre (opcional)</label><input id="a-nombre" name="nombre" autocomplete="name"></div>
+      <div><label for="a-correo">Correo electrónico</label><input id="a-correo" name="correo" type="email" autocomplete="email" required></div>
+      <div><label for="a-pass">Contraseña</label><input id="a-pass" name="contrasena" type="password" minlength="8" autocomplete="new-password" required><p class="ayuda" data-solo="registro">Mínimo 8 caracteres.</p></div>
+      <button class="btn btn--rojo" type="submit" id="a-enviar">Crear cuenta</button>
+      <p class="estado" id="a-estado" role="status"></p>
+    </form>
+  </div>
+</div>
+
+<script src="/assets/acceso.js"></script>
+<script src="/assets/cuenta.js"></script>
+</body>
+</html>
