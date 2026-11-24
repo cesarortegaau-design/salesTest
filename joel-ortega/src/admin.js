@@ -20,8 +20,9 @@ async function carga() {
   try {
     datos = await api('/api/admin');
   } catch {
-    const yo = await fetch('/api/auth').then((r) => r.json()).catch(() => ({}));
-    muestraAcceso(yo.usuario);
+    $('acceso-admin').hidden = false;
+    $('cab-texto').textContent = 'Acceso solo con la clave de administración.';
+    $('aa-clave').focus();
     return;
   }
   $('acceso-admin').hidden = true;
@@ -98,43 +99,14 @@ document.addEventListener('click', async (e) => {
   if (e.target.id === 'salir') { await fetch('/api/auth?accion=salir', { method: 'POST' }); location.href = '/'; }
 });
 
-let sesionActual = null;
-function muestraAcceso(u) {
-  sesionActual = u || null;
-  $('acceso-admin').hidden = false;
-  $('cab-texto').textContent = 'Acceso solo para administración.';
-  const aviso = $('aa-aviso');
-  if (u?.adminPendiente) {
-    aviso.innerHTML = `Sesión iniciada como <b>${esc(u.correo)}</b>. Solo falta la clave de administración.`;
-    $('aa-cuenta').hidden = true; $('aa-pass-wrap').hidden = true;
-    $('aa-clave').focus();
-  } else if (u) {
-    aviso.innerHTML = `Tienes sesión como <b>${esc(u.correo)}</b>, que <b>no</b> está en la lista de administradores (variable ADMIN_EMAILS). Entra con el correo de administrador:`;
-    $('aa-cuenta').hidden = false; $('aa-pass-wrap').hidden = false;
-  } else {
-    aviso.textContent = 'Escribe tu correo y contraseña de administrador y la clave de administración.';
-    $('aa-cuenta').hidden = false; $('aa-pass-wrap').hidden = false;
-  }
-}
-
 $('form-admin').addEventListener('submit', async (e) => {
   e.preventDefault();
   const st = $('aa-estado');
   st.className = 'estado'; st.textContent = 'Verificando…';
   try {
-    if (!sesionActual?.adminPendiente) {
-      await api('/api/auth?accion=entrar', { method: 'POST', body: JSON.stringify({ correo: $('aa-correo').value, contrasena: $('aa-pass').value }) });
-      const yo = await fetch('/api/auth').then((r) => r.json());
-      if (!yo.usuario?.adminPendiente && !yo.usuario?.admin) {
-        muestraAcceso(yo.usuario);
-        st.textContent = 'La contraseña es correcta, pero ese correo no está en ADMIN_EMAILS.';
-        return;
-      }
-      sesionActual = yo.usuario;
-    }
     await api('/api/auth?accion=clave', { method: 'POST', body: JSON.stringify({ clave: $('aa-clave').value }) });
     st.textContent = '';
-    $('aa-clave').value = ''; $('aa-pass').value = '';
+    $('aa-clave').value = '';
     await carga();
   } catch (err) { st.textContent = err.message; }
 });

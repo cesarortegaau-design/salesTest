@@ -60,7 +60,7 @@ export const cookieSalida = () => [
   `${COOKIE_ADMIN}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`,
 ];
 
-// Segundo factor del panel: la clave de administración (variable ADMIN_KEY), además del correo y la contraseña.
+// Acceso al panel: solo con la clave de administración (variable ADMIN_KEY).
 export function claveAdminValida(clave) {
   const ref = process.env.ADMIN_KEY;
   if (!ref || typeof clave !== 'string' || !clave) return false;
@@ -68,8 +68,8 @@ export function claveAdminValida(clave) {
   const b = createHash('sha256').update(ref.trim()).digest();
   return timingSafeEqual(a, b);
 }
-export function cookieAdmin(correo) {
-  const datos = Buffer.from(JSON.stringify({ e: normalizaCorreo(correo), a: 1, x: Date.now() + HORAS_ADMIN * 36e5 })).toString('base64url');
+export function cookieAdmin() {
+  const datos = Buffer.from(JSON.stringify({ e: 'admin', a: 1, x: Date.now() + HORAS_ADMIN * 36e5 })).toString('base64url');
   return `${COOKIE_ADMIN}=${datos}.${firma('admin:' + datos)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${HORAS_ADMIN * 3600}`;
 }
 
@@ -94,11 +94,11 @@ function verifica(valor, prefijo = '') {
 
 export function sesion(request) {
   const s = verifica(leeCookie(request, COOKIE));
-  if (!s) return null;
-  const correoAdmin = esAdmin(s.e);
-  const a = correoAdmin ? verifica(leeCookie(request, COOKIE_ADMIN), 'admin:') : null;
-  const admin = !!(a && a.e === s.e && process.env.ADMIN_KEY);
-  return { correo: s.e, admin, adminPendiente: correoAdmin && !admin };
+  const a = process.env.ADMIN_KEY ? verifica(leeCookie(request, COOKIE_ADMIN), 'admin:') : null;
+  const admin = !!(a && a.a === 1);
+  if (s) return { correo: s.e, admin, soloAdmin: false };
+  if (admin) return { correo: 'panel@admin', admin: true, soloAdmin: true };
+  return null;
 }
 
 // ---------- Almacén (Blob privado, lectura sin caché) ----------

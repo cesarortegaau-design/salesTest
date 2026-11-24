@@ -7,25 +7,24 @@ import {
 export async function GET(request) {
   const s = sesion(request);
   if (!s) return json({ usuario: null });
+  if (s.soloAdmin) return json({ usuario: null, admin: true });
   const u = await leeJSON(rutaUsuario(s.correo));
   if (!u) return salida({ usuario: null });
-  return json({ usuario: { correo: u.correo, nombre: u.nombre || '', admin: s.admin, adminPendiente: s.adminPendiente } });
+  return json({ usuario: { correo: u.correo, nombre: u.nombre || '', admin: s.admin } });
 }
 
 export async function POST(request) {
   const accion = new URL(request.url).searchParams.get('accion');
   if (accion === 'salir') return salida({ ok: true });
 
-  // Clave de administración: solo para un correo de administración con sesión iniciada.
+  // Acceso al panel solo con la clave de administración (ADMIN_KEY).
   if (accion === 'clave') {
-    const s = sesion(request);
-    if (!s || !(s.admin || s.adminPendiente)) return error('Sin permiso.', 403);
     const b = await cuerpoJSON(request);
     if (!claveAdminValida(b.clave)) {
-      await new Promise((r) => setTimeout(r, 800));
-      return error('Clave de administración incorrecta.', 401);
+      await new Promise((r) => setTimeout(r, 1000));
+      return error(process.env.ADMIN_KEY ? 'Clave incorrecta.' : 'Falta configurar ADMIN_KEY en Vercel.', 401);
     }
-    return json({ ok: true }, 200, { 'set-cookie': cookieAdmin(s.correo) });
+    return json({ ok: true }, 200, { 'set-cookie': cookieAdmin() });
   }
 
   const b = await cuerpoJSON(request);

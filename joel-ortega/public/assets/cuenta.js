@@ -25,7 +25,7 @@
     var u = me.usuario;
     document.getElementById('saludo').textContent = 'Hola' + (u.nombre ? ', ' + u.nombre : '') + '. Sesión iniciada como ' + u.correo + '.';
     document.getElementById('salir').hidden = false;
-    document.getElementById('liga-admin').hidden = !(u.admin || u.adminPendiente);
+    document.getElementById('liga-admin').hidden = !u.admin;
     document.getElementById('con-sesion').hidden = false;
     var d = await fetch('/api/solicitud').then(function (r) { return r.json(); });
     pintaAjustes(d.ajustes);
