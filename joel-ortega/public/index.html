@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<header class="barra">
+<header class="barra barra--sobre" id="barra">
   <div class="barra__top">
     <a href="#nuevo-libro"><b>Nuevo libro</b> · Semblanzas tras bambalinas <u>Coopera y recíbelo →</u></a>
     <span>Ni dios · ni patrón · ni partido</span>
@@ -29,26 +29,72 @@
       <li class="sec"><a href="#prensa">Prensa</a></li>
       <li class="sec"><a href="#libros">Libros</a></li>
       <li class="sec"><a href="#medios">Videos</a></li>
+      <li class="sec"><a href="#galeria">Galería</a></li>
       <li><a href="/cuenta.html" class="btn btn--rojo btn--sm" data-cuenta>Mi cuenta</a></li>
     </ul>
   </nav>
 </header>
 
-<section class="hero" id="inicio">
-  <div class="hero__fondo" aria-hidden="true"></div>
-  <div class="wrap hero__contenido">
-    <p class="hero__fecha">Ciudad de México · 1946</p>
-    <h1 class="hero__nombre">
-      <span>Joel Ortega</span>
-      <span class="hero__banda"><span>Juárez</span></span>
-    </h1>
-    <p class="hero__lema">Militante <b>libertario</b>, sobreviviente de Tlatelolco y voz crítica de la izquierda mexicana</p>
-    <p class="hero__ejes">1968 · 10 de junio · Sindicatos · 40 años de prensa</p>
-    <div class="hero__acciones">
-      <a href="#nuevo-libro" class="btn btn--blanco">Su nuevo libro</a>
-      <a href="#libros" class="btn btn--linea-blanca">Toda su obra</a>
+<section class="hero" id="inicio" aria-roledescription="carrusel" aria-label="Portada">
+  <div class="reel" id="reel">
+    <div class="reel__lamina reel__lamina--on" data-titulo="Portada">
+      <img class="reel__fondo" src="/media/archivo/a68-i-178-026.webp" alt="" fetchpriority="high">
+      <div class="reel__tinte"></div>
+      <img class="reel__retrato" src="/media/joel-retrato.webp" alt="Joel Ortega Juárez">
+      <div class="wrap reel__contenido">
+        <p class="hero__fecha">Militante libertario · Ciudad de México · 1946</p>
+        <h1 class="hero__nombre"><span>Joel Ortega</span><span class="hero__banda"><span>Juárez</span></span></h1>
+        <p class="hero__lema">Sobreviviente de Tlatelolco y <b>voz crítica</b> de la izquierda mexicana</p>
+        <p class="hero__ejes">1968 · 10 de junio · Sindicatos · 40 años de prensa</p>
+        <div class="hero__acciones">
+          <a href="#nuevo-libro" class="btn btn--blanco">Su nuevo libro</a>
+          <a href="#medios" class="btn btn--linea-blanca">Ver entrevistas</a>
+        </div>
+      </div>
+    </div>
+    <div class="reel__lamina" data-titulo="Nuevo libro" aria-hidden="true">
+      <img class="reel__fondo" src="/media/archivo/a68-i-157-001.webp" alt="" loading="lazy">
+      <div class="reel__tinte"></div>
+      <div class="lamina__portada nuevo__portada" aria-hidden="true"><small>Joel Ortega Juárez</small><b>Semblanzas<i>tras bambalinas</i></b><span>Nuevo libro</span></div>
+      <div class="wrap reel__contenido">
+        <p class="hero__fecha">Nuevo libro · edición del autor</p>
+        <h2 class="lamina__titulo">Semblanzas <i>tras bambalinas</i></h2>
+        <p class="lamina__texto">Medio centenar de retratos de militantes comunistas y socialistas que ya no están, y de algunos hombres del poder. Coopera y recíbelo directamente de Joel.</p>
+        <div class="hero__acciones">
+          <button class="btn btn--blanco" type="button" data-acceso="registro" data-libro="semblanzas">Quiero el libro</button>
+          <a href="#nuevo-libro" class="btn btn--linea-blanca">Cómo funciona</a>
+        </div>
+      </div>
+    </div>
+    <div class="reel__lamina" data-titulo="40 años de prensa" aria-hidden="true">
+      <img class="reel__fondo" src="/media/yt/HU8sEvus4zE.webp" alt="" loading="lazy">
+      <div class="reel__tinte"></div>
+      <div class="wrap reel__contenido">
+        <p class="hero__fecha">Columnista desde 1989</p>
+        <h2 class="lamina__titulo">40 años <i>en la prensa nacional</i></h2>
+        <ul class="lamina__lista">
+          <li><b>1989–91</b>Excélsior</li><li><b>1991–96</b>La Jornada</li><li><b>1994–97</b>El País</li><li><b>2000–19</b>Milenio</li><li><b>2020–hoy</b>Siempre!</li><li><b>2024–hoy</b>El Universal</li>
+        </ul>
+        <div class="hero__acciones"><a href="#prensa" class="btn btn--blanco">Su trayectoria en prensa</a></div>
+      </div>
+    </div>
+    <div class="reel__lamina" data-titulo="10 de junio" aria-hidden="true">
+      <img class="reel__fondo" src="/media/archivo/d10-i-028-008.webp" alt="" loading="lazy">
+      <div class="reel__tinte"></div>
+      <div class="wrap reel__contenido">
+        <p class="hero__fecha">Jueves de Corpus · 10 de junio de 1971</p>
+        <h2 class="lamina__titulo">El diez de junio <i>ganó la calle</i></h2>
+        <p class="lamina__texto">Encabezó la marcha atacada por los Halcones. Medio siglo después, su libro extrae las lecciones de esa lucha: la libertad de manifestación se conquistó.</p>
+        <div class="hero__acciones">
+          <button class="btn btn--blanco" type="button" data-acceso="registro" data-libro="diez-de-junio">Pide el libro</button>
+          <a href="#archivo" class="btn btn--linea-blanca">Leer el manifiesto</a>
+        </div>
+      </div>
     </div>
   </div>
+  <div class="wrap reel__barras-wrap"><div class="reel__barras" id="reel-barras" role="tablist" aria-label="Láminas"></div></div>
+  <button class="reel__flecha reel__flecha--izq" type="button" aria-label="Lámina anterior" data-reel="-1">‹</button>
+  <button class="reel__flecha reel__flecha--der" type="button" aria-label="Lámina siguiente" data-reel="1">›</button>
   <div class="hero__diagonal" aria-hidden="true"></div>
 </section>
 
@@ -65,6 +111,7 @@
 
 <!-- NUEVO LIBRO -->
 <section class="nuevo" id="nuevo-libro">
+  <img class="nuevo__fondo" src="/media/archivo/a68-i-157-001.webp" alt="" loading="lazy">
   <div class="wrap nuevo__grid">
     <div class="nuevo__portada" aria-hidden="true">
       <small>Joel Ortega Juárez</small>
@@ -103,6 +150,7 @@
   </div>
   <div class="ejes__grid">
     <article class="eje" tabindex="0">
+      <img class="eje__img" src="/media/archivo/a68-i-162-008.webp" alt="" loading="lazy">
       <div class="eje__velo"></div><span class="eje__num">01</span>
       <div class="eje__cuerpo">
         <p class="eje__bajada">1963 – 1968</p>
@@ -114,6 +162,7 @@
       </div>
     </article>
     <article class="eje" tabindex="0">
+      <img class="eje__img" src="/media/archivo/d10-i-028-010.webp" alt="" loading="lazy">
       <div class="eje__velo"></div><span class="eje__num">02</span>
       <div class="eje__cuerpo">
         <p class="eje__bajada">10 de junio de 1971</p>
@@ -125,6 +174,7 @@
       </div>
     </article>
     <article class="eje" tabindex="0">
+      <img class="eje__img" src="/media/archivo/a68-i-181-031.webp" alt="" loading="lazy">
       <div class="eje__velo"></div><span class="eje__num">03</span>
       <div class="eje__cuerpo">
         <p class="eje__bajada">1975 – 1977</p>
@@ -136,6 +186,7 @@
       </div>
     </article>
     <article class="eje" tabindex="0">
+      <img class="eje__img" src="/media/archivo/a68-i-183-033.webp" alt="" loading="lazy">
       <div class="eje__velo"></div><span class="eje__num">04</span>
       <div class="eje__cuerpo">
         <p class="eje__bajada">1972 – 1986</p>
@@ -147,6 +198,7 @@
       </div>
     </article>
     <article class="eje" tabindex="0">
+      <img class="eje__img" src="/media/archivo/a68-i-182-032.webp" alt="" loading="lazy">
       <div class="eje__velo"></div><span class="eje__num">05</span>
       <div class="eje__cuerpo">
         <p class="eje__bajada">2002 – 2006</p>
@@ -158,6 +210,7 @@
       </div>
     </article>
     <article class="eje" tabindex="0">
+      <img class="eje__img" src="/media/archivo/a68-i-184-035.webp" alt="" loading="lazy">
       <div class="eje__velo"></div><span class="eje__num">06</span>
       <div class="eje__cuerpo">
         <p class="eje__bajada">1989 – hoy</p>
@@ -198,11 +251,12 @@
       <li class="hito">
         <span class="hito__anio">1963</span>
         <div class="hito__cuerpo"><h3>Juventud Comunista</h3><p>Se une a la Juventud Comunista Mexicana y asiste como delegado a la Conferencia Nacional de Estudiantes Democráticos en Morelia, Michoacán.</p></div>
+        <figure class="hito__media" style="margin:0"><img src="/media/archivo/a68-i-157-000.webp" alt="Mitin comunista · años sesenta" loading="lazy"><small>Mitin comunista · años sesenta</small></figure>
       </li>
       <li class="hito">
         <span class="hito__anio">1968</span>
         <div class="hito__cuerpo"><h3>Movimiento estudiantil</h3><p>Estudiante de Economía en la UNAM, participa en el movimiento y sobrevive a la masacre de Tlatelolco.</p></div>
-        <a class="hito__media" href="https://www.youtube.com/watch?v=nUzyfUZ98EE" target="_blank" rel="noopener" aria-label="Ver video: Fue una noche terrible"><b>“Fue una noche terrible”</b><span class="play"></span><small>YouTube</small></a>
+        <a class="hito__media" href="https://www.youtube.com/watch?v=nUzyfUZ98EE" target="_blank" rel="noopener" data-video="nUzyfUZ98EE" aria-label="Ver video: 50 años de la masacre"><img src="/media/yt/nUzyfUZ98EE.webp" alt="" loading="lazy"><span class="play"></span><small>France 24 · Testimonio</small></a>
       </li>
       <li class="hito">
         <span class="hito__anio">1969</span>
@@ -211,10 +265,12 @@
       <li class="hito">
         <span class="hito__anio">1971</span>
         <div class="hito__cuerpo"><h3>Jueves de Corpus</h3><p>El 10 de junio encabeza la marcha atacada por los Halcones. En julio, el Comité Coordinador de Comités de Lucha publica el <a class="enlace" href="#archivo">Manifiesto 10 de junio</a>. Se gira una orden de aprehensión en su contra que no se ejecuta por el rechazo nacional e internacional.</p></div>
+        <figure class="hito__media" style="margin:0"><img src="/media/archivo/d10-i-028-008.webp" alt="Los Halcones · 10 de junio de 1971" loading="lazy"><small>Los Halcones · 10 de junio de 1971</small></figure>
       </li>
       <li class="hito">
         <span class="hito__anio">1975</span>
         <div class="hito__cuerpo"><h3>Frente a Echeverría</h3><p>El 14 de marzo confronta al presidente Luis Echeverría en la UNAM. Ese año cofunda el SPAUNAM e interviene en su huelga de junio.</p></div>
+        <figure class="hito__media" style="margin:0"><img src="/media/archivo/a68-i-181-031.webp" alt="SPAUNAM" loading="lazy"><small>SPAUNAM</small></figure>
       </li>
       <li class="hito">
         <span class="hito__anio">1977</span>
@@ -223,6 +279,7 @@
       <li class="hito">
         <span class="hito__anio">1981</span>
         <div class="hito__cuerpo"><h3>PSUM y ruptura</h3><p>Participa en la creación del PSUM y es miembro de su Comité Central hasta 1986. Después crea el Movimiento Comunista Libertario.</p></div>
+        <figure class="hito__media" style="margin:0"><img src="/media/archivo/a68-i-183-033.webp" alt="Mitin del PSUM" loading="lazy"><small>Mitin del PSUM</small></figure>
       </li>
       <li class="hito">
         <span class="hito__anio">1988</span>
@@ -231,6 +288,7 @@
       <li class="hito">
         <span class="hito__anio">1989</span>
         <div class="hito__cuerpo"><h3>Primera columna</h3><p>Empieza a escribir en Excélsior. Es el inicio de 40 años en la prensa nacional, que siguen hoy en Siempre! y El Universal.</p></div>
+        <a class="hito__media" href="https://www.youtube.com/watch?v=HU8sEvus4zE" target="_blank" rel="noopener" data-video="HU8sEvus4zE" aria-label="Ver video: Joel Ortega en Milenio"><img src="/media/yt/HU8sEvus4zE.webp" alt="" loading="lazy"><span class="play"></span><small>Milenio · El asalto a la razón</small></a>
       </li>
       <li class="hito">
         <span class="hito__anio">2002</span>
@@ -239,7 +297,7 @@
       <li class="hito">
         <span class="hito__anio">2018</span>
         <div class="hito__cuerpo"><h3>Adiós al 68</h3><p>A medio siglo del movimiento publica un ensayo que propone cerrar el ciclo y hacer autocrítica, sin olvidar.</p></div>
-        <a class="hito__media" href="https://www.youtube.com/watch?v=xum7irFsH9k" target="_blank" rel="noopener" aria-label="Escuchar: Adiós al 68, audiolibro"><b>Adiós al 68 · audiolibro</b><span class="play"></span><small>Google Play Libros</small></a>
+        <a class="hito__media" href="https://www.youtube.com/watch?v=xum7irFsH9k" target="_blank" rel="noopener" data-video="xum7irFsH9k" aria-label="Ver video: Adiós al 68, audiolibro"><img src="/media/yt/xum7irFsH9k.webp" alt="" loading="lazy"><span class="play"></span><small>Audiolibro · Google Play</small></a>
       </li>
       <li class="hito">
         <span class="hito__anio">2021</span>
@@ -248,11 +306,12 @@
       <li class="hito">
         <span class="hito__anio">2024</span>
         <div class="hito__cuerpo"><h3>Las dos izquierdas</h3><p>Con Jorge G. Castañeda publica una revisión de la historia de la izquierda mexicana. Ese año se suma a las páginas de opinión de El Universal.</p></div>
-        <a class="hito__media" href="https://www.youtube.com/watch?v=kd_Qt1MYw-Y" target="_blank" rel="noopener" aria-label="Ver video: autores de Las dos izquierdas"><b>Ortega y Castañeda</b><span class="play"></span><small>YouTube</small></a>
+        <a class="hito__media" href="https://www.youtube.com/watch?v=kd_Qt1MYw-Y" target="_blank" rel="noopener" data-video="kd_Qt1MYw-Y" aria-label="Ver video: Ortega y Castañeda"><img src="/media/yt/kd_Qt1MYw-Y.webp" alt="" loading="lazy"><span class="play"></span><small>En 15 · Las dos izquierdas</small></a>
       </li>
       <li class="hito">
         <span class="hito__anio">Hoy</span>
         <div class="hito__cuerpo"><h3>Semblanzas tras bambalinas</h3><p>Su nuevo libro reúne medio centenar de retratos de militantes de las izquierdas y de algunos hombres del poder. Se distribuye directamente desde este sitio. <a class="enlace" href="#nuevo-libro">Cómo recibirlo</a></p></div>
+        <figure class="hito__media" style="margin:0"><img src="/media/archivo/a68-i-157-001.webp" alt="Militantes de los años sesenta" loading="lazy"><small>Militantes de los años sesenta</small></figure>
       </li>
     </ol>
   </div>
@@ -462,16 +521,50 @@
   <div class="wrap">
     <p class="kicker">En medios</p>
     <h2 class="titulo titulo--xl">Una voz <span class="resalta">que no se calla</span></h2>
+    <button class="video video--destacado" type="button" data-video="HU8sEvus4zE"><img src="/media/yt/HU8sEvus4zE.webp" alt="" loading="lazy"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>Milenio · El asalto a la razón con Carlos Marín</small><b>Joel Ortega, líder estudiantil de 1968</b></span></button>
     <div class="medios__grid">
-      <a class="video video--grande" href="https://www.youtube.com/watch?v=HU8sEvus4zE" target="_blank" rel="noopener"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>Milenio · El asalto a la razón</small><b>Joel Ortega, líder estudiantil de 1968</b></span></a>
-      <a class="video" href="https://www.youtube.com/watch?v=ThUfr5k7yPk" target="_blank" rel="noopener"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>Milenio</small><b>Líder estudiantil del 68 · Parte II</b></span></a>
-      <a class="video" href="https://www.youtube.com/watch?v=XARjKi3jp5k" target="_blank" rel="noopener"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>2025</small><b>El 68 defiende libertad</b></span></a>
-      <a class="video" href="https://www.youtube.com/watch?v=nUzyfUZ98EE" target="_blank" rel="noopener"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>Testimonio</small><b>Fue una noche terrible</b></span></a>
-      <a class="video" href="https://www.youtube.com/watch?v=kd_Qt1MYw-Y" target="_blank" rel="noopener"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>Penguin Random House</small><b>Autores de Las dos izquierdas</b></span></a>
-      <a class="video" href="https://www.youtube.com/watch?v=skAkhwpXRvU" target="_blank" rel="noopener"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>Noticias 7AM</small><b>Entrevista: Las dos izquierdas</b></span></a>
-      <a class="video" href="https://www.youtube.com/watch?v=xum7irFsH9k" target="_blank" rel="noopener"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>Audiolibro</small><b>Adiós al 68 · vista previa</b></span></a>
-      <a class="video" href="https://www.youtube.com/watch?v=UqercXjlAvY" target="_blank" rel="noopener"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>FIL Zócalo 2022</small><b>Presenta Epílogo, de Esteban Ascencio</b></span></a>
+      <button class="video video--grande" type="button" data-video="kd_Qt1MYw-Y"><img src="/media/yt/kd_Qt1MYw-Y.webp" alt="" loading="lazy"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>En 15 · Penguin Random House</small><b>Ortega y Castañeda: Las dos izquierdas</b></span></button>
+      <button class="video" type="button" data-video="ThUfr5k7yPk"><img src="/media/yt/ThUfr5k7yPk.webp" alt="" loading="lazy"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>Milenio</small><b>Líder estudiantil del 68 · Parte II</b></span></button>
+      <button class="video" type="button" data-video="nUzyfUZ98EE"><img src="/media/yt/nUzyfUZ98EE.webp" alt="" loading="lazy"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>France 24</small><b>Testimonio de un sobreviviente</b></span></button>
+      <button class="video" type="button" data-video="skAkhwpXRvU"><img src="/media/yt/skAkhwpXRvU.webp" alt="" loading="lazy"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>Noticias 7AM · Uniradio</small><b>Lo que nunca se contó de la izquierda</b></span></button>
+      <button class="video" type="button" data-video="XARjKi3jp5k"><img src="/media/yt/XARjKi3jp5k.webp" alt="" loading="lazy"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>2025</small><b>“Mentir no es combatir”</b></span></button>
+      <button class="video video--ancho" type="button" data-video="xum7irFsH9k"><img src="/media/yt/xum7irFsH9k.webp" alt="" loading="lazy"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>Audiolibro</small><b>Adiós al 68 · vista previa</b></span></button>
+      <button class="video video--ancho" type="button" data-video="UqercXjlAvY"><img src="/media/yt/UqercXjlAvY.webp" alt="" loading="lazy"><span class="video__velo"></span><span class="play"></span><span class="video__info"><small>FIL Zócalo 2022</small><b>Presenta Epílogo, de Esteban Ascencio</b></span></button>
     </div>
+  </div>
+</section>
+
+<section class="galeria" id="galeria">
+  <div class="galeria__show" id="galeria-show">
+    <img class="on" src="/media/archivo/a68-i-162-008.webp" alt="">
+    <img src="/media/archivo/d10-i-029-012.webp" alt="" loading="lazy">
+    <img src="/media/archivo/a68-i-171-019.webp" alt="" loading="lazy">
+    <img src="/media/archivo/a68-i-182-032.webp" alt="" loading="lazy">
+    <div class="galeria__velo"></div>
+    <div class="wrap galeria__titulo">
+      <p class="kicker">Galería</p>
+      <h2 class="titulo titulo--xl titulo--claro">Archivo de la calle</h2>
+      <p>Fotografías del movimiento estudiantil, el 10 de junio y los sindicatos universitarios, publicadas en sus libros.</p>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="galeria__grid">
+      <figure><img src="/media/archivo/a68-i-157-001.webp" alt="Grupo de jóvenes militantes en los años sesenta" loading="lazy"><figcaption>Jóvenes comunistas · años sesenta</figcaption></figure>
+      <figure><img src="/media/archivo/a68-i-159-004.webp" alt="Manifestación con manta de Ciencias, Filosofía y Economía" loading="lazy"><figcaption>Marcha estudiantil · 1968</figcaption></figure>
+      <figure><img src="/media/archivo/a68-i-161-007.webp" alt="Cartel Dictadura no" loading="lazy"><figcaption>Gráfica del 68</figcaption></figure>
+      <figure><img src="/media/archivo/d10-i-028-010.webp" alt="Agresión de los Halcones el 10 de junio de 1971" loading="lazy"><figcaption>Jueves de Corpus · 1971</figcaption></figure>
+      <figure><img src="/media/archivo/a68-i-171-018.webp" alt="Manta de petroleros: Diálogo sí, represión no" loading="lazy"><figcaption>Petroleros con el movimiento</figcaption></figure>
+      <figure><img src="/media/archivo/a68-i-179-028.webp" alt="Mitin en un balcón universitario" loading="lazy"><figcaption>Asamblea estudiantil</figcaption></figure>
+      <figure><img src="/media/archivo/d10-i-026-002.webp" alt="Estudiantes pintando mantas" loading="lazy"><figcaption>Preparando la marcha · 1971</figcaption></figure>
+      <figure><img src="/media/archivo/a68-i-181-031.webp" alt="Asamblea del SPAUNAM" loading="lazy"><figcaption>SPAUNAM · 1975</figcaption></figure>
+      <figure><img src="/media/archivo/d10-i-030-014.webp" alt="Protesta estudiantil" loading="lazy"><figcaption>Protesta universitaria</figcaption></figure>
+      <figure><img src="/media/archivo/a68-i-169-016.webp" alt="Manifestación con banderas" loading="lazy"><figcaption>Manifestación · 1968</figcaption></figure>
+      <figure><img src="/media/archivo/a68-i-183-033.webp" alt="Mitin del PSUM" loading="lazy"><figcaption>PSUM</figcaption></figure>
+      <figure><img src="/media/archivo/d10-i-031-020.webp" alt="Marcha por Ayotzinapa" loading="lazy"><figcaption>¡Ayotzinapa vive!</figcaption></figure>
+      <figure><img src="/media/archivo/a68-i-184-035.webp" alt="Presentación de El último decenio de la era priista" loading="lazy"><figcaption>El último decenio de la era priista</figcaption></figure>
+      <figure><img src="/media/archivo/a68-i-159-003.webp" alt="Camión durante el movimiento de 1968" loading="lazy"><figcaption>Brigadas del 68</figcaption></figure>
+    </div>
+    <p class="galeria__fuente">Fuentes: apéndice fotográfico de <i>Adiós al 68</i> (Grijalbo, 2018) y <i>El diez de junio ganó la calle</i> (Laberinto, 2021).</p>
   </div>
 </section>
 
@@ -550,6 +643,7 @@
 </div>
 
 <script src="/assets/acceso.js"></script>
+<script src="/assets/portada.js"></script>
 <script>
 (function(){
   var items=['Arnoldo Martínez Verdugo','Ana María Rico Galán','Carlos Monsiváis','Othón Salazar','Renato Leduc','Teodoro Petkoff','Porfirio Muñoz Ledo','Guillermo Rousset','Manuel Marcué Pardiñas','Ramón Ramírez Gómez','Rafael Aguilar Talamantes','Evaristo Pérez Arreola','Arturo Whaley','Selma Beraud','Óscar Levín','Jesús Pacheco','Rubén Lau','Horacio Radetich','Agustín Avecia','Filemón Guarneros','Cuauhtémoc Cárdenas','Luis Echeverría'];
