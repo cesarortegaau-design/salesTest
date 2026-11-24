@@ -6,7 +6,9 @@ import { LIBROS } from './libros.js';
 export { LIBROS };
 
 const COOKIE = 'jo_sesion';
+const COOKIE_ADMIN = 'jo_admin';
 const DIAS = 30;
+const HORAS_ADMIN = 12;
 
 // ---------- Respuestas ----------
 export const json = (data, status = 200, headers = {}) =>
@@ -52,23 +54,50 @@ export function cookieSesion(correo) {
   const valor = `${datos}.${firma(datos)}`;
   return `${COOKIE}=${valor}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${DIAS * 86400}`;
 }
-export const cookieSalida = () => `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+export const cookieSalida = () => [
+  `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
+  `${COOKIE_ADMIN}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`,
+];
 
-export function sesion(request) {
+// Segundo factor del panel: la clave de administración (variable ADMIN_KEY), además del correo y la contraseña.
+export function claveAdminValida(clave) {
+  const ref = process.env.ADMIN_KEY;
+  if (!ref || typeof clave !== 'string' || !clave) return false;
+  const a = createHash('sha256').update(clave.trim()).digest();
+  const b = createHash('sha256').update(ref.trim()).digest();
+  return timingSafeEqual(a, b);
+}
+export function cookieAdmin(correo) {
+  const datos = Buffer.from(JSON.stringify({ e: normalizaCorreo(correo), a: 1, x: Date.now() + HORAS_ADMIN * 36e5 })).toString('base64url');
+  return `${COOKIE_ADMIN}=${datos}.${firma('admin:' + datos)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${HORAS_ADMIN * 3600}`;
+}
+
+function leeCookie(request, nombre) {
   const cab = request.headers.get('cookie') || '';
-  const m = cab.match(new RegExp(`(?:^|;\\s*)${COOKIE}=([^;]+)`));
-  if (!m) return null;
-  const [datos, f] = m[1].split('.');
+  const m = cab.match(new RegExp(`(?:^|;\\s*)${nombre}=([^;]+)`));
+  return m ? m[1] : null;
+}
+function verifica(valor, prefijo = '') {
+  if (!valor) return null;
+  const [datos, f] = valor.split('.');
   if (!datos || !f) return null;
-  const esperada = firma(datos);
+  const esperada = firma(prefijo + datos);
   if (esperada.length !== f.length || !timingSafeEqual(Buffer.from(esperada), Buffer.from(f))) return null;
   try {
     const s = JSON.parse(Buffer.from(datos, 'base64url').toString());
-    if (!s.e || s.x < Date.now()) return null;
-    return { correo: s.e, admin: esAdmin(s.e) };
+    return s.e && s.x >= Date.now() ? s : null;
   } catch {
     return null;
   }
+}
+
+export function sesion(request) {
+  const s = verifica(leeCookie(request, COOKIE));
+  if (!s) return null;
+  const correoAdmin = esAdmin(s.e);
+  const a = correoAdmin ? verifica(leeCookie(request, COOKIE_ADMIN), 'admin:') : null;
+  const admin = !!(a && a.e === s.e && process.env.ADMIN_KEY);
+  return { correo: s.e, admin, adminPendiente: correoAdmin && !admin };
 }
 
 // ---------- Almacén (Blob privado, lectura sin caché) ----------

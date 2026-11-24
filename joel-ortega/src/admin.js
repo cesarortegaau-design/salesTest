@@ -20,10 +20,18 @@ async function carga() {
   try {
     datos = await api('/api/admin');
   } catch {
-    $('sin-permiso').hidden = false;
-    $('cab-texto').textContent = 'Solo Joel puede ver esta página.';
+    const yo = await fetch('/api/auth').then((r) => r.json()).catch(() => ({}));
+    if (yo.usuario?.adminPendiente) {
+      $('pide-clave').hidden = false;
+      $('cab-texto').textContent = 'Escribe la clave de administración para continuar.';
+      $('k-clave').focus();
+    } else {
+      $('sin-permiso').hidden = false;
+      $('cab-texto').textContent = 'Solo Joel puede ver esta página.';
+    }
     return;
   }
+  $('pide-clave').hidden = true;
   $('panel').hidden = false;
   pinta();
 }
@@ -95,6 +103,18 @@ document.addEventListener('click', async (e) => {
     } catch (err) { alert(err.message); b.disabled = false; }
   }
   if (e.target.id === 'salir') { await fetch('/api/auth?accion=salir', { method: 'POST' }); location.href = '/'; }
+});
+
+$('form-clave').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const st = $('k-estado');
+  st.className = 'estado'; st.textContent = 'Verificando…';
+  try {
+    await api('/api/auth?accion=clave', { method: 'POST', body: JSON.stringify({ clave: $('k-clave').value }) });
+    st.textContent = '';
+    $('k-clave').value = '';
+    await carga();
+  } catch (err) { st.textContent = err.message; }
 });
 
 $('form-compartir').addEventListener('submit', async (e) => {

@@ -33,6 +33,16 @@
 
 <main class="cuerpo-pagina">
   <div class="wrap">
+    <div id="pide-clave" class="tarjeta" hidden style="max-width:520px">
+      <h2>Clave de administración</h2>
+      <p>Por seguridad, el panel pide una clave además de tu correo y contraseña. La sesión de administración dura 12 horas.</p>
+      <form id="form-clave" style="display:grid;gap:12px">
+        <div><label for="k-clave">Clave</label><input id="k-clave" type="password" autocomplete="off" required></div>
+        <div><button class="btn btn--rojo" type="submit">Entrar al panel</button></div>
+        <p class="estado" role="status" id="k-estado"></p>
+      </form>
+    </div>
+
     <div id="sin-permiso" class="tarjeta" hidden>
       <h2>Acceso restringido</h2>
       <p>Esta página es solo para Joel. <a class="enlace" href="/cuenta.html">Entra con tu cuenta</a>.</p>
