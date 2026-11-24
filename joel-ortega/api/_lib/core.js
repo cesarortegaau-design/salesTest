@@ -25,7 +25,8 @@ export const llave = (correo) => createHash('sha256').update(normalizaCorreo(cor
 
 export function esAdmin(correo) {
   const lista = String(process.env.ADMIN_EMAILS || '')
-    .split(',')
+    .replace(/["'<>]/g, ' ')
+    .split(/[\s,;]+/)
     .map(normalizaCorreo)
     .filter(Boolean);
   return lista.includes(normalizaCorreo(correo));

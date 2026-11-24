@@ -33,19 +33,17 @@
 
 <main class="cuerpo-pagina">
   <div class="wrap">
-    <div id="pide-clave" class="tarjeta" hidden style="max-width:520px">
-      <h2>Clave de administración</h2>
-      <p>Por seguridad, el panel pide una clave además de tu correo y contraseña. La sesión de administración dura 12 horas.</p>
-      <form id="form-clave" style="display:grid;gap:12px">
-        <div><label for="k-clave">Clave</label><input id="k-clave" type="password" autocomplete="off" required></div>
+    <div id="acceso-admin" class="tarjeta" hidden style="max-width:560px">
+      <h2>Entrar como administrador</h2>
+      <p id="aa-aviso" style="margin:0 0 14px"></p>
+      <form id="form-admin" style="display:grid;gap:12px" novalidate>
+        <div id="aa-cuenta"><label for="aa-correo">Correo de administrador</label><input id="aa-correo" type="email" autocomplete="username" required></div>
+        <div id="aa-pass-wrap"><label for="aa-pass">Contraseña de tu cuenta</label><input id="aa-pass" type="password" autocomplete="current-password" required></div>
+        <div><label for="aa-clave">Clave de administración</label><input id="aa-clave" type="password" autocomplete="off" required><p class="ayuda">La que está guardada en la variable ADMIN_KEY de Vercel.</p></div>
         <div><button class="btn btn--rojo" type="submit">Entrar al panel</button></div>
-        <p class="estado" role="status" id="k-estado"></p>
+        <p class="estado" role="status" id="aa-estado"></p>
       </form>
-    </div>
-
-    <div id="sin-permiso" class="tarjeta" hidden>
-      <h2>Acceso restringido</h2>
-      <p>Esta página es solo para Joel. <a class="enlace" href="/cuenta.html">Entra con tu cuenta</a>.</p>
+      <p class="ayuda" style="margin-top:16px">¿Aún no tienes cuenta? <a class="enlace" href="/cuenta.html">Créala aquí</a> con el correo de administrador y vuelve a esta página.</p>
     </div>
 
     <div id="panel" hidden>
