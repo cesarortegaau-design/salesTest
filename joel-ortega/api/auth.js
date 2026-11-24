@@ -1,7 +1,7 @@
 // /api/auth?accion=registro|entrar|salir|yo
 import {
   json, error, normalizaCorreo, correoValido, hashContrasena, verificaContrasena,
-  cookieSesion, cookieSalida, sesion, leeJSON, guardaJSON, rutaUsuario, cuerpoJSON, claveAdminValida, cookieAdmin,
+  cookieSesion, cookieSalida, sesion, leeJSON, guardaJSON, rutaUsuario, cuerpoJSON, claveAdminValida, cookieAdmin, listaTodo, llave,
 } from './_lib/core.js';
 
 export async function GET(request) {
@@ -16,6 +16,34 @@ export async function GET(request) {
 export async function POST(request) {
   const accion = new URL(request.url).searchParams.get('accion');
   if (accion === 'salir') return salida({ ok: true });
+  // Salir solo del panel de Joel, sin cerrar la sesión de lector.
+  if (accion === 'salir-admin') return json({ ok: true }, 200, { 'set-cookie': cookieSalida()[1] });
+
+  // Perfil: cambiar nombre y/o contraseña de la cuenta con sesión iniciada.
+  if (accion === 'perfil') {
+    const s = sesion(request);
+    if (!s || s.soloAdmin) return error('Inicia sesión.', 401);
+    const ruta = rutaUsuario(s.correo);
+    const u = await leeJSON(ruta);
+    if (!u) return error('Tu cuenta no existe.', 404);
+    const b = await cuerpoJSON(request);
+    const cambios = {};
+    if (typeof b.nombre === 'string') cambios.nombre = b.nombre.trim().slice(0, 120);
+    if (b.nueva) {
+      if (!verificaContrasena(String(b.actual || ''), u.sal, u.hash)) return error('Tu contraseña actual no es correcta.', 401);
+      if (String(b.nueva).length < 8 || String(b.nueva).length > 200) return error('La nueva contraseña debe tener al menos 8 caracteres.');
+      Object.assign(cambios, hashContrasena(String(b.nueva)));
+    }
+    await guardaJSON(ruta, { ...u, ...cambios, actualizado: new Date().toISOString() });
+    // El nombre nuevo también se usa en sus solicitudes (y por lo tanto en sus dedicatorias).
+    if (cambios.nombre !== undefined && cambios.nombre !== u.nombre) {
+      for (const bl of await listaTodo(`solicitudes/${llave(s.correo)}/`)) {
+        const sol = await leeJSON(bl.pathname);
+        if (sol) await guardaJSON(bl.pathname, { ...sol, nombre: cambios.nombre });
+      }
+    }
+    return json({ usuario: { correo: u.correo, nombre: cambios.nombre ?? u.nombre ?? '', admin: s.admin }, contrasena: !!b.nueva });
+  }
 
   // Acceso al panel solo con la clave de administración (ADMIN_KEY).
   if (accion === 'clave') {

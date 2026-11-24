@@ -107,7 +107,7 @@ document.addEventListener('click', async (e) => {
     return;
   }
   if (e.target.closest('[data-cerrar-dedicar]') || e.target.id === 'dedicar') cierraDedicar();
-  if (e.target.id === 'salir') { await fetch('/api/auth?accion=salir', { method: 'POST' }); location.href = '/'; }
+  if (e.target.id === 'salir') { await fetch('/api/auth?accion=salir-admin', { method: 'POST' }); location.href = '/'; }
 });
 
 // ---------- Dedicatoria y firma ----------

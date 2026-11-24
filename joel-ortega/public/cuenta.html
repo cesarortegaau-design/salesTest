@@ -18,8 +18,8 @@
     <a href="/" class="marca"><b>JOEL ORTEGA</b><span>JUÁREZ</span></a>
     <ul>
       <li class="sec"><a href="/#libros">Libros</a></li>
-      <li id="liga-admin" hidden><a href="/admin.html">Panel de Joel</a></li>
-      <li><button class="btn btn--rojo btn--sm" type="button" id="salir" hidden>Salir</button></li>
+      <li class="sec"><a href="#perfil" id="liga-perfil" hidden>Mi perfil</a></li>
+      <li data-sesion></li>
     </ul>
   </nav>
 </header>
@@ -64,7 +64,28 @@
           </ol>
         </div>
       </div>
+      <h2 class="titulo titulo--l" id="libros" style="margin:40px 0 18px">Mis <span class="resalta">libros</span></h2>
       <div id="lista-libros"></div>
+
+      <section class="tarjeta perfil-tarjeta" id="perfil" aria-labelledby="perfil-titulo">
+        <p class="kicker">Mi perfil</p>
+        <h2 id="perfil-titulo">Tus datos</h2>
+        <div class="rejilla-2">
+          <form id="form-perfil" style="display:grid;gap:12px;align-content:start">
+            <div><label for="p-correo">Correo</label><input id="p-correo" type="email" readonly></div>
+            <div><label for="p-nombre">Nombre (así aparecerá en tu dedicatoria)</label><input id="p-nombre" autocomplete="name" maxlength="120"></div>
+            <div><button class="btn btn--negro" type="submit">Guardar nombre</button></div>
+            <p class="estado" role="status" id="p-estado"></p>
+          </form>
+          <form id="form-pass" style="display:grid;gap:12px;align-content:start">
+            <div><label for="p-actual">Contraseña actual</label><input id="p-actual" type="password" autocomplete="current-password" required></div>
+            <div><label for="p-nueva">Nueva contraseña</label><input id="p-nueva" type="password" autocomplete="new-password" minlength="8" required><p class="ayuda">Mínimo 8 caracteres.</p></div>
+            <div><button class="btn btn--linea" type="submit">Cambiar contraseña</button></div>
+            <p class="estado" role="status" id="pp-estado"></p>
+          </form>
+        </div>
+        <p class="ayuda" style="margin-top:16px">Tu sesión se mantiene abierta en este dispositivo durante 30 días. <button type="button" class="enlace" data-salir style="background:none;border:0;padding:0;cursor:pointer;font:inherit">Cerrar sesión</button></p>
+      </section>
     </div>
   </div>
 </main>
@@ -87,6 +108,7 @@
   </div>
 </div>
 
+<script src="/assets/sesion.js"></script>
 <script src="/assets/acceso.js"></script>
 <script src="/assets/cuenta.js"></script>
 </body>

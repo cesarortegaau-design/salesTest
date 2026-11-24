@@ -24,8 +24,9 @@
     }
     var u = me.usuario;
     document.getElementById('saludo').textContent = 'Hola' + (u.nombre ? ', ' + u.nombre : '') + '. Sesión iniciada como ' + u.correo + '.';
-    document.getElementById('salir').hidden = false;
-    document.getElementById('liga-admin').hidden = !u.admin;
+    document.getElementById('liga-perfil').hidden = false;
+    document.getElementById('p-correo').value = u.correo;
+    document.getElementById('p-nombre').value = u.nombre || '';
     document.getElementById('con-sesion').hidden = false;
     var d = await fetch('/api/solicitud').then(function (r) { return r.json(); });
     pintaAjustes(d.ajustes);
@@ -112,7 +113,32 @@
   document.addEventListener('click', async function (e) {
     var c = e.target.closest('[data-copiar]');
     if (c) { try { await navigator.clipboard.writeText(c.dataset.copiar); c.textContent = 'Copiado'; } catch (err) {} }
-    if (e.target.id === 'salir') { await fetch('/api/auth?accion=salir', { method: 'POST' }); location.href = '/'; }
+
+  });
+
+  async function perfil(datos, st) {
+    st.className = 'estado'; st.textContent = 'Guardando…';
+    try {
+      var r = await fetch('/api/auth?accion=perfil', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(datos) });
+      var d = await r.json();
+      if (!r.ok) { st.textContent = d.error || 'No se pudo guardar.'; return null; }
+      st.className = 'estado ok';
+      return d;
+    } catch (e) { st.textContent = 'Sin conexión. Intenta de nuevo.'; return null; }
+  }
+  document.getElementById('form-perfil').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var st = document.getElementById('p-estado');
+    var d = await perfil({ nombre: document.getElementById('p-nombre').value }, st);
+    if (d) { st.textContent = 'Nombre guardado.'; if (window.sesionJO) window.sesionJO.refresca(); document.getElementById('saludo').textContent = 'Hola' + (d.usuario.nombre ? ', ' + d.usuario.nombre : '') + '. Sesión iniciada como ' + d.usuario.correo + '.'; }
+  });
+  document.getElementById('form-pass').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var st = document.getElementById('pp-estado');
+    var nueva = document.getElementById('p-nueva').value;
+    if (nueva.length < 8) { st.className = 'estado'; st.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.'; return; }
+    var d = await perfil({ actual: document.getElementById('p-actual').value, nueva: nueva }, st);
+    if (d) { st.textContent = 'Contraseña actualizada.'; e.target.reset(); }
   });
 
   carga();
