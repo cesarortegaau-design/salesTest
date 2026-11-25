@@ -1,0 +1,1723 @@
+{
+  "version": 1,
+  "name": "Integración IventIA ↔ SAE: facturación automática",
+  "items": [
+    {
+      "id": "esf_f_eco",
+      "kind": "frame",
+      "title": "Ecosistema de la integración IventIA ↔ SAE",
+      "color": "gris",
+      "x": 0,
+      "y": 0,
+      "w": 1778,
+      "h": 402
+    },
+    {
+      "id": "esf_n_exp",
+      "kind": "node",
+      "nodeType": "person",
+      "title": "Expositor",
+      "subtitle": "Pide y descarga su factura",
+      "status": "EXISTE",
+      "x": 24,
+      "y": 58,
+      "w": 230,
+      "h": 120
+    },
+    {
+      "id": "esf_n_portal",
+      "kind": "node",
+      "nodeType": "web",
+      "title": "Portal del expositor",
+      "subtitle": "Solicitudes, facturas y avisos",
+      "status": "EXISTE",
+      "x": 324,
+      "y": 58,
+      "w": 230,
+      "h": 120
+    },
+    {
+      "id": "esf_n_iv",
+      "kind": "node",
+      "nodeType": "app",
+      "title": "IventIA",
+      "subtitle": "Eventos, órdenes, pagos y solicitudes de factura",
+      "status": "EXISTE",
+      "x": 624,
+      "y": 58,
+      "w": 230,
+      "h": 120
+    },
+    {
+      "id": "esf_n_outbox",
+      "kind": "node",
+      "nodeType": "db",
+      "title": "Bitácora de integración",
+      "subtitle": "Cola de eventos con idempotencia y reintentos",
+      "status": "CONSTRUIR",
+      "x": 624,
+      "y": 258,
+      "w": 230,
+      "h": 120
+    },
+    {
+      "id": "esf_n_con",
+      "kind": "node",
+      "nodeType": "api",
+      "title": "Conector IventIA–SAE",
+      "subtitle": "Servicio local junto al servidor de SAE (sale por HTTPS a IventIA)",
+      "status": "CONSTRUIR",
+      "x": 924,
+      "y": 258,
+      "w": 230,
+      "h": 120
+    },
+    {
+      "id": "esf_n_sae",
+      "kind": "node",
+      "nodeType": "app",
+      "title": "Aspel SAE",
+      "subtitle": "Clientes, productos, facturas, cuentas por cobrar",
+      "status": "CONFIGURAR",
+      "x": 1224,
+      "y": 58,
+      "w": 230,
+      "h": 120
+    },
+    {
+      "id": "esf_n_pac",
+      "kind": "node",
+      "nodeType": "service",
+      "title": "PAC / SAT",
+      "subtitle": "Timbrado y cancelación de CFDI 4.0",
+      "status": "EXISTE",
+      "x": 1524,
+      "y": 58,
+      "w": 230,
+      "h": 120
+    },
+    {
+      "id": "esf_n_coi",
+      "kind": "node",
+      "nodeType": "app",
+      "title": "Aspel COI",
+      "subtitle": "Pólizas por la interfaz SAE–COI",
+      "status": "CONFIGURAR",
+      "x": 1224,
+      "y": 258,
+      "w": 230,
+      "h": 120
+    },
+    {
+      "id": "esf_n_cont",
+      "kind": "node",
+      "nodeType": "person",
+      "title": "Contabilidad",
+      "subtitle": "Atiende excepciones y concilia",
+      "status": "EXISTE",
+      "x": 924,
+      "y": 58,
+      "w": 230,
+      "h": 120
+    },
+    {
+      "id": "esf_f_mirror",
+      "kind": "frame",
+      "title": "Objetos espejo: IventIA → Aspel SAE",
+      "color": "gris",
+      "x": 1858,
+      "y": 0,
+      "w": 1428,
+      "h": 402
+    },
+    {
+      "id": "esf_m_0",
+      "kind": "note",
+      "color": "lila",
+      "text": "Organización (SA, KIU, A&B)\n→ Empresa SAE o serie de facturación por organización. Decidir: una empresa con series o una empresa por razón social.",
+      "x": 1882,
+      "y": 58,
+      "w": 260,
+      "h": 150
+    },
+    {
+      "id": "esf_m_1",
+      "kind": "note",
+      "color": "azul",
+      "text": "Cliente (personType, RFC, régimen, C.P., uso CFDI)\n→ Cliente SAE (CLIE01): CLAVE, NOMBRE, RFC, régimen, C.P., uso CFDI. El id de IventIA va en un campo libre (CLIE_CLIB01). Llave: RFC + id.",
+      "x": 2162,
+      "y": 58,
+      "w": 260,
+      "h": 150
+    },
+    {
+      "id": "esf_m_2",
+      "kind": "note",
+      "color": "lila",
+      "text": "Evento (código, fechas, recinto)\n→ SAE no tiene proyectos nativos: campo libre del documento (FACTF_CLIB01) y observaciones + departamento o centro de costos en COI (por confirmar).",
+      "x": 2442,
+      "y": 58,
+      "w": 260,
+      "h": 150
+    },
+    {
+      "id": "esf_m_3",
+      "kind": "note",
+      "color": "azul",
+      "text": "Recurso (code, unit, type, perDay)\n→ Producto/servicio SAE (INVE01: CVE_ART, DESCR, clave SAT y unidad SAT, esquema de impuestos). Servicios sin existencias.",
+      "x": 2722,
+      "y": 58,
+      "w": 260,
+      "h": 150
+    },
+    {
+      "id": "esf_m_4",
+      "kind": "note",
+      "color": "lila",
+      "text": "Lista de precios / pricingTier\n→ Lista de precios SAE (precio 1…n) o el precio viaja en la partida (recomendado: IventIA manda el precio).",
+      "x": 3002,
+      "y": 58,
+      "w": 260,
+      "h": 150
+    },
+    {
+      "id": "esf_m_5",
+      "kind": "note",
+      "color": "azul",
+      "text": "Orden + partidas (OrderLineItem)\n→ Factura SAE: encabezado FACTF01 (CVE_DOC serie+folio, cliente, método y forma de pago, uso CFDI) y partidas PAR_FACTF01.",
+      "x": 1882,
+      "y": 228,
+      "w": 260,
+      "h": 150
+    },
+    {
+      "id": "esf_m_6",
+      "kind": "note",
+      "color": "lila",
+      "text": "Pago (OrderPayment)\n→ Cuentas por cobrar: cargo en CUEN_M01 y abono en CUEN_DET01 ligado a la factura (NO_FACTURA = CVE_DOC). En PPD, complemento de pago (tipo G).",
+      "x": 2162,
+      "y": 228,
+      "w": 260,
+      "h": 150
+    },
+    {
+      "id": "esf_m_7",
+      "kind": "note",
+      "color": "azul",
+      "text": "Solicitud de factura (InvoiceRequest)\n→ Documento SAE (CVE_DOC) + CFDI01 (UUID, XML_DOC, fecha de certificación); ESCFD indica pendiente o timbrado. Estado y bitácora en IventIA.",
+      "x": 2442,
+      "y": 228,
+      "w": 260,
+      "h": 150
+    },
+    {
+      "id": "esf_m_8",
+      "kind": "note",
+      "color": "lila",
+      "text": "Orden nota de crédito (isCreditNote)\n→ Devolución SAE (tipo D, relación 03) o bonificación (tipo E, relación 01) ligada a la factura original.",
+      "x": 2722,
+      "y": 228,
+      "w": 260,
+      "h": 150
+    },
+    {
+      "id": "esf_m_9",
+      "kind": "note",
+      "color": "azul",
+      "text": "Proveedor y orden de compra (fase 2)\n→ Proveedor SAE (PROV01) y cuentas por pagar (PAGA_M01 / PAGA_DET01) para servicios subcontratados.",
+      "x": 3002,
+      "y": 228,
+      "w": 260,
+      "h": 150
+    },
+    {
+      "id": "esf_f_open",
+      "kind": "frame",
+      "title": "Decisiones abiertas, riesgos y meta",
+      "color": "gris",
+      "x": 0,
+      "y": 482,
+      "w": 2268,
+      "h": 232
+    },
+    {
+      "id": "esf_o_0",
+      "kind": "note",
+      "color": "blanco",
+      "text": "Versión de SAE (8, 9, 10 o Nube) y motor (Firebird o SQL Server). Pedir a Aspel/Siigo (o un distribuidor certificado) su postura sobre SDK o API: no hay API pública.",
+      "x": 24,
+      "y": 540,
+      "w": 260,
+      "h": 150,
+      "stickers": [
+        {
+          "id": "esf_ok0",
+          "emoji": "❓",
+          "label": "Duda"
+        }
+      ]
+    },
+    {
+      "id": "esf_o_1",
+      "kind": "note",
+      "color": "blanco",
+      "text": "¿Una empresa SAE con series por organización (SA, KIU, A&B) o una empresa por razón social?",
+      "x": 304,
+      "y": 540,
+      "w": 260,
+      "h": 150,
+      "stickers": [
+        {
+          "id": "esf_ok1",
+          "emoji": "❓",
+          "label": "Duda"
+        }
+      ]
+    },
+    {
+      "id": "esf_o_2",
+      "kind": "note",
+      "color": "blanco",
+      "text": "El evento en SAE: ¿campo libre del documento, serie por evento o departamento en COI? SAE no tiene proyectos nativos.",
+      "x": 584,
+      "y": 540,
+      "w": 260,
+      "h": 150,
+      "stickers": [
+        {
+          "id": "esf_ok2",
+          "emoji": "❓",
+          "label": "Duda"
+        }
+      ]
+    },
+    {
+      "id": "esf_o_3",
+      "kind": "note",
+      "color": "blanco",
+      "text": "Timbrado: A) el conector timbra con un PAC y deja UUID y XML en SAE, o B) SAE timbra en lote y el conector recoge el XML de CFDI01. ¿Qué PAC usan hoy?",
+      "x": 864,
+      "y": 540,
+      "w": 260,
+      "h": 150,
+      "stickers": [
+        {
+          "id": "esf_ok3",
+          "emoji": "❓",
+          "label": "Duda"
+        }
+      ]
+    },
+    {
+      "id": "esf_o_4",
+      "kind": "note",
+      "color": "rosa",
+      "text": "Escribir directo en la base Firebird de SAE puede romper folios, saldos y soporte de Aspel: sólo con la vía oficial o validada.",
+      "x": 1144,
+      "y": 540,
+      "w": 260,
+      "h": 150,
+      "stickers": [
+        {
+          "id": "esf_ok4",
+          "emoji": "❗",
+          "label": "Riesgo"
+        }
+      ]
+    },
+    {
+      "id": "esf_o_5",
+      "kind": "note",
+      "color": "rosa",
+      "text": "El servidor de SAE está en la red local: el conector debe salir a IventIA (no abrir puertos hacia SAE).",
+      "x": 1424,
+      "y": 540,
+      "w": 260,
+      "h": 150,
+      "stickers": [
+        {
+          "id": "esf_ok5",
+          "emoji": "❗",
+          "label": "Riesgo"
+        }
+      ]
+    },
+    {
+      "id": "esf_o_6",
+      "kind": "note",
+      "color": "rosa",
+      "text": "Bloqueos de SAE cuando Contabilidad trabaja al mismo tiempo: cola con reintentos y horario de corte.",
+      "x": 1704,
+      "y": 540,
+      "w": 260,
+      "h": 150,
+      "stickers": [
+        {
+          "id": "esf_ok6",
+          "emoji": "❗",
+          "label": "Riesgo"
+        }
+      ]
+    },
+    {
+      "id": "esf_o_7",
+      "kind": "note",
+      "color": "verde",
+      "text": "Meta: 90 % de las facturas timbradas sin intervención y conciliación diaria sin diferencias abiertas de más de 24 h.",
+      "x": 1984,
+      "y": 540,
+      "w": 260,
+      "h": 150,
+      "stickers": [
+        {
+          "id": "esf_ok7",
+          "emoji": "🎯",
+          "label": "Meta"
+        }
+      ]
+    },
+    {
+      "id": "esf_hu08",
+      "kind": "note",
+      "color": "amarillo",
+      "text": "Punto de partida · IventIA HU-SA-08\nContabilidad: factura, nota de crédito y reembolso.\nHoy el Contador genera y timbra el CFDI en SAE y sube a mano XML y PDF. Esta integración lo automatiza y deja al Contador sólo las excepciones.",
+      "x": 2304,
+      "y": 540,
+      "w": 320,
+      "h": 160,
+      "stickers": [
+        {
+          "id": "esf_hu08k",
+          "emoji": "📌",
+          "label": "Fijo"
+        }
+      ]
+    },
+    {
+      "id": "esf_f_refs",
+      "kind": "frame",
+      "title": "Referencias de Aspel SAE",
+      "color": "gris",
+      "x": 0,
+      "y": 794,
+      "w": 1708,
+      "h": 212
+    },
+    {
+      "id": "esf_ref_0",
+      "kind": "ref",
+      "refType": "link",
+      "title": "Abrir la base de datos de SAE 8.0 (S023)",
+      "url": "https://saeportaldeclientes.aspel.com.mx/wp-content/uploads/2023/06/S023_Abrir_bases_de_datos_Aspel_SAE_80.pdf",
+      "x": 24,
+      "y": 852,
+      "w": 260,
+      "h": 130
+    },
+    {
+      "id": "esf_ref_1",
+      "kind": "ref",
+      "refType": "link",
+      "title": "Importar de Excel a SAE (S021)",
+      "url": "https://saeportaldeclientes.aspel.com.mx/wp-content/uploads/2023/06/S021_Procedimiento-para-importar-informacion-de-Excel-a-Aspel-SAE.pdf",
+      "x": 304,
+      "y": 852,
+      "w": 260,
+      "h": 130
+    },
+    {
+      "id": "esf_ref_2",
+      "kind": "ref",
+      "refType": "link",
+      "title": "Aplicación de anticipo a la factura (S038)",
+      "url": "https://saeportaldeclientes.aspel.com.mx/wp-content/uploads/2023/06/S038_Aplicacion-de-anticipo-a-la-factura-de-la-operacion-en-Aspel-SAE-80V40.pdf",
+      "x": 584,
+      "y": 852,
+      "w": 260,
+      "h": 130
+    },
+    {
+      "id": "esf_ref_3",
+      "kind": "ref",
+      "refType": "link",
+      "title": "Nota de crédito en SAE 8.0 (S010)",
+      "url": "https://saeportaldeclientes.aspel.com.mx/wp-content/uploads/2023/06/S010_Elaboracion-de-una-Nota-de-credito-en-SAE-8.0V40.pdf",
+      "x": 864,
+      "y": 852,
+      "w": 260,
+      "h": 130
+    },
+    {
+      "id": "esf_ref_4",
+      "kind": "ref",
+      "refType": "link",
+      "title": "CFDI con timbrado de terceros (S048)",
+      "url": "https://saeportaldeclientes.aspel.com.mx/wp-content/uploads/2023/06/S048_Generacion-de-CFDI-con-servicio-de-timbrado-de-terceros-en-Aspel-SAE-80V40.pdf",
+      "x": 1144,
+      "y": 852,
+      "w": 260,
+      "h": 130
+    },
+    {
+      "id": "esf_ref_5",
+      "kind": "ref",
+      "refType": "link",
+      "title": "Contabilidad electrónica SAE–COI (S003)",
+      "url": "https://saeportaldeclientes.aspel.com.mx/wp-content/uploads/2023/06/S003_Contabilidad-Electronica-con-Aspel-SAE-80.pdf",
+      "x": 1424,
+      "y": 852,
+      "w": 260,
+      "h": 130
+    },
+    {
+      "id": "zen_proc_zprmwvocxfkkc83c",
+      "kind": "process",
+      "processId": "zprmwvocxfkkc83c",
+      "x": 0,
+      "y": 1126,
+      "w": 1168,
+      "h": 958
+    },
+    {
+      "id": "zen_proc_zprmwvocxfk1bfdfp",
+      "kind": "process",
+      "processId": "zprmwvocxfk1bfdfp",
+      "x": 0,
+      "y": 2204,
+      "w": 1404,
+      "h": 1118
+    },
+    {
+      "id": "zen_proc_zprmwvocxfk1xw4iy",
+      "kind": "process",
+      "processId": "zprmwvocxfk1xw4iy",
+      "x": 0,
+      "y": 3442,
+      "w": 1404,
+      "h": 950
+    },
+    {
+      "id": "zen_proc_zprmwvocxfk2f9o2p",
+      "kind": "process",
+      "processId": "zprmwvocxfk2f9o2p",
+      "x": 0,
+      "y": 4512,
+      "w": 1168,
+      "h": 950
+    },
+    {
+      "id": "zen_proc_zprmwvocxfk2yz61p",
+      "kind": "process",
+      "processId": "zprmwvocxfk2yz61p",
+      "x": 0,
+      "y": 5582,
+      "w": 1168,
+      "h": 1194
+    },
+    {
+      "id": "zen_proc_zprmwvocxfk3f0hvp",
+      "kind": "process",
+      "processId": "zprmwvocxfk3f0hvp",
+      "x": 0,
+      "y": 6896,
+      "w": 932,
+      "h": 1034
+    }
+  ],
+  "connectors": [
+    {
+      "id": "esf_c_0",
+      "from": "esf_n_exp",
+      "to": "esf_n_portal",
+      "label": "pide factura"
+    },
+    {
+      "id": "esf_c_1",
+      "from": "esf_n_portal",
+      "to": "esf_n_iv",
+      "label": "solicitud"
+    },
+    {
+      "id": "esf_c_2",
+      "from": "esf_n_iv",
+      "to": "esf_n_outbox",
+      "label": "eventos"
+    },
+    {
+      "id": "esf_c_3",
+      "from": "esf_n_outbox",
+      "to": "esf_n_con",
+      "label": "toma y confirma"
+    },
+    {
+      "id": "esf_c_4",
+      "from": "esf_n_con",
+      "to": "esf_n_sae",
+      "label": "lee Firebird · escribe por vía validada"
+    },
+    {
+      "id": "esf_c_5",
+      "from": "esf_n_sae",
+      "to": "esf_n_pac",
+      "label": "timbra"
+    },
+    {
+      "id": "esf_c_6",
+      "from": "esf_n_sae",
+      "to": "esf_n_coi",
+      "label": "pólizas"
+    },
+    {
+      "id": "esf_c_7",
+      "from": "esf_n_con",
+      "to": "esf_n_iv",
+      "label": "XML, PDF, claves SAE",
+      "dashed": true
+    },
+    {
+      "id": "esf_c_8",
+      "from": "esf_n_cont",
+      "to": "esf_n_iv",
+      "label": "excepciones",
+      "dashed": true
+    },
+    {
+      "id": "esf_d_zprmwvocxfkkc83c_zprmwvocxfk1bfdfp",
+      "from": "zen_proc_zprmwvocxfkkc83c",
+      "to": "zen_proc_zprmwvocxfk1bfdfp",
+      "label": "habilita",
+      "dashed": true
+    },
+    {
+      "id": "esf_d_zprmwvocxfkkc83c_zprmwvocxfk1xw4iy",
+      "from": "zen_proc_zprmwvocxfkkc83c",
+      "to": "zen_proc_zprmwvocxfk1xw4iy",
+      "label": "habilita",
+      "dashed": true
+    },
+    {
+      "id": "esf_d_zprmwvocxfk1bfdfp_zprmwvocxfk2f9o2p",
+      "from": "zen_proc_zprmwvocxfk1bfdfp",
+      "to": "zen_proc_zprmwvocxfk2f9o2p",
+      "label": "habilita",
+      "dashed": true
+    },
+    {
+      "id": "esf_d_zprmwvocxfk1bfdfp_zprmwvocxfk2yz61p",
+      "from": "zen_proc_zprmwvocxfk1bfdfp",
+      "to": "zen_proc_zprmwvocxfk2yz61p",
+      "label": "habilita",
+      "dashed": true
+    },
+    {
+      "id": "esf_d_zprmwvocxfk1bfdfp_zprmwvocxfk3f0hvp",
+      "from": "zen_proc_zprmwvocxfk1bfdfp",
+      "to": "zen_proc_zprmwvocxfk3f0hvp",
+      "label": "habilita",
+      "dashed": true
+    },
+    {
+      "id": "esf_d_zprmwvocxfk2f9o2p_zprmwvocxfk3f0hvp",
+      "from": "zen_proc_zprmwvocxfk2f9o2p",
+      "to": "zen_proc_zprmwvocxfk3f0hvp",
+      "label": "habilita",
+      "dashed": true
+    }
+  ],
+  "roles": [
+    {
+      "id": "rmwvocxfk5cdn0",
+      "name": "IventIA (sistema)",
+      "color": "#1b6ef3"
+    },
+    {
+      "id": "rmwvocxfk7pbqh",
+      "name": "Conector IventIA–SAE",
+      "color": "#7b2ff7"
+    },
+    {
+      "id": "rmwvocxfk9s4kn",
+      "name": "Aspel SAE / PAC (sistema)",
+      "color": "#139a43"
+    },
+    {
+      "id": "rmwvocxfkbw37v",
+      "name": "Contador",
+      "color": "#f08c00"
+    },
+    {
+      "id": "rmwvocxfkrx6mr",
+      "name": "Expositor",
+      "color": "#d7263d"
+    },
+    {
+      "id": "rmwvocxfk1ju87m",
+      "name": "Coordinador SA",
+      "color": "#0f9fb3"
+    },
+    {
+      "id": "rmwvocxfk37r0ii",
+      "name": "Gerente de Contabilidad",
+      "color": "#b0306b"
+    }
+  ],
+  "processes": {
+    "zprmwvocxfkkc83c": {
+      "id": "zprmwvocxfkkc83c",
+      "name": "Catálogos espejo · Sincronizar IventIA → SAE",
+      "goal": "Que todo cliente, evento, recurso y precio que se factura en IventIA exista igual en SAE, con su clave SAE guardada en IventIA, antes de que se pida una factura.",
+      "current": "Contabilidad da de alta al cliente y los conceptos en SAE cuando llega la solicitud; las claves de SAE no viven en IventIA y los nombres no coinciden.",
+      "future": "Cada alta o cambio en IventIA deja un evento en la bitácora de integración; el conector lo crea o actualiza en SAE y guarda la clave SAE en el objeto de IventIA. Los errores quedan en una bandeja.",
+      "trigger": "REGISTRO",
+      "stages": [
+        {
+          "id": "smwvocym30sxeb",
+          "name": "Detectar",
+          "color": "#1b6ef3",
+          "goal": "Saber qué cambió"
+        },
+        {
+          "id": "smwvocym313uhj",
+          "name": "Mapear",
+          "color": "#7b2ff7",
+          "goal": "Traducir al formato de SAE y validar"
+        },
+        {
+          "id": "smwvocym32j6yt",
+          "name": "Registrar en SAE",
+          "color": "#f08c00"
+        },
+        {
+          "id": "smwvocym33xy0n",
+          "name": "Confirmar",
+          "color": "#139a43"
+        }
+      ],
+      "lanes": [
+        {
+          "id": "lmwvocym44gaak",
+          "roleId": "rmwvocxfk5cdn0"
+        },
+        {
+          "id": "lmwvocym450r5o",
+          "roleId": "rmwvocxfk7pbqh"
+        },
+        {
+          "id": "lmwvocym46ipmp",
+          "roleId": "rmwvocxfk9s4kn"
+        },
+        {
+          "id": "lmwvocym478hrp",
+          "roleId": "rmwvocxfkbw37v"
+        }
+      ],
+      "steps": [
+        {
+          "id": "pmwvocym48rr8p",
+          "stageId": "smwvocym30sxeb",
+          "laneId": "lmwvocym44gaak",
+          "name": "Registra en la bitácora de integración el alta o cambio de cliente, evento, recurso o lista de precios",
+          "type": "AUTOMATICO",
+          "deliverable": "Evento de integración (outbox)",
+          "notes": "Llave de idempotencia: objeto + id + versión (updatedAt)."
+        },
+        {
+          "id": "pmwvocym49kyvb",
+          "stageId": "smwvocym313uhj",
+          "laneId": "lmwvocym450r5o",
+          "name": "Toma el evento y busca su espejo en SAE por la llave de integración (RFC, código de recurso, código de evento)",
+          "type": "AUTOMATICO",
+          "screen": "Conector (servicio Windows junto al servidor de SAE)"
+        },
+        {
+          "id": "pmwvocym4axpqt",
+          "stageId": "smwvocym313uhj",
+          "laneId": "lmwvocym450r5o",
+          "name": "Valida obligatorios: RFC, régimen fiscal, C.P., uso CFDI, clave SAT de producto/servicio y de unidad",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym4bqjpl",
+          "stageId": "smwvocym313uhj",
+          "laneId": "lmwvocym450r5o",
+          "name": "¿Los datos están completos y son válidos?",
+          "type": "DECISION",
+          "yes": "pmwvocym4dxy8b",
+          "no": "pmwvocym4cz4zc"
+        },
+        {
+          "id": "pmwvocym4cz4zc",
+          "stageId": "smwvocym313uhj",
+          "laneId": "lmwvocym478hrp",
+          "name": "Corrige el dato en el catálogo de IventIA o en la tabla de equivalencias SAT",
+          "type": "TAREA",
+          "slaHours": 24,
+          "screen": "IventIA › Bandeja de integración",
+          "notes": "Al guardar, el cambio vuelve a la bitácora (paso 1)."
+        },
+        {
+          "id": "pmwvocym4dxy8b",
+          "stageId": "smwvocym32j6yt",
+          "laneId": "lmwvocym46ipmp",
+          "name": "Da de alta o actualiza el cliente, el producto/servicio o la obra/proyecto del evento",
+          "type": "AUTOMATICO",
+          "deliverable": "Clave SAE",
+          "notes": "Tablas CLIE01 / INVE01 (+ campos libres CLIE_CLIB01). Lectura en Firebird; escritura por importación oficial o por el conector validado en una copia de la base (SAE no tiene API pública)."
+        },
+        {
+          "id": "pmwvocym4euto9",
+          "stageId": "smwvocym33xy0n",
+          "laneId": "lmwvocym450r5o",
+          "name": "Guarda la clave SAE en el objeto de IventIA y lo marca Sincronizado",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym4fj0sq",
+          "stageId": "smwvocym33xy0n",
+          "laneId": "lmwvocym44gaak",
+          "name": "Avisa al Contador los errores de sincronización pendientes",
+          "type": "AVISO",
+          "notify": [
+            "rmwvocxfkbw37v"
+          ]
+        }
+      ],
+      "views": [
+        {
+          "id": "esf_v0_zprmwvocxfkkc83c",
+          "name": "Bandeja de integración",
+          "roleIds": [
+            "rmwvocxfkbw37v"
+          ],
+          "columns": "Objeto, Código, Acción, Estado, Error, Intentos, Fecha",
+          "filter": "Estado = Error",
+          "groupBy": "Objeto"
+        }
+      ],
+      "reports": [],
+      "story": {
+        "phase": "Preparar",
+        "phaseHint": "Objetos espejo en SAE",
+        "como": "Contador",
+        "quiero": "que clientes, eventos, recursos y precios de IventIA existan igual en SAE",
+        "para": "no volver a capturar nada al facturar",
+        "module": "IventIA › Configuración › Integración SAE",
+        "org": "Expo Santa Fe",
+        "criteria": [
+          "Toda alta o cambio deja un evento en la bitácora con llave de idempotencia",
+          "El objeto de IventIA guarda su clave SAE y la fecha de sincronización",
+          "Un error no detiene la cola: queda en la bandeja con el motivo",
+          "Reintentar no duplica clientes ni productos en SAE"
+        ],
+        "depends": [],
+        "authorizedBy": [
+          "Gerente de Contabilidad · Expo Santa Fe",
+          "Gerente de Administración y Finanzas · Expo Santa Fe",
+          "Gerente de Sistemas · Expo Santa Fe",
+          "Consumatum"
+        ],
+        "notes": [
+          "La llave del cliente es el RFC (+ id de IventIA para RFC genéricos XAXX010101000 / XEXX010101000)",
+          "Los recursos de IventIA se mapean a productos/servicios con clave SAT y unidad SAT"
+        ],
+        "doc": "https://drive.google.com/file/d/14qFtupXkWm03CsUR6mYtzxxBH_gAPJ7L/view"
+      },
+      "startDate": "2027-01-11"
+    },
+    "zprmwvocxfk1bfdfp": {
+      "id": "zprmwvocxfk1bfdfp",
+      "name": "Facturar · Pago primero (PUE) automática",
+      "goal": "Que el expositor reciba su CFDI timbrado en el portal minutos después de pedirlo, sin que Contabilidad capture nada.",
+      "current": "HU-SA-08: el Contador abre la bandeja, valida RFC, genera el CFDI en SAE con los datos de la prefactura, timbra y adjunta a mano el XML y el PDF.",
+      "future": "La solicitud se valida sola, el conector crea el documento en SAE con las partidas de la orden y el pago, SAE timbra, y el XML/PDF regresan a IventIA y al portal. El Contador sólo ve excepciones.",
+      "trigger": "FORMULARIO",
+      "stages": [
+        {
+          "id": "smwvocym4gx9bp",
+          "name": "Solicitar",
+          "color": "#1b6ef3"
+        },
+        {
+          "id": "smwvocym4hz9jp",
+          "name": "Validar",
+          "color": "#7b2ff7"
+        },
+        {
+          "id": "smwvocym4i5c64",
+          "name": "Registrar en SAE",
+          "color": "#f08c00"
+        },
+        {
+          "id": "smwvocym4jgh9m",
+          "name": "Timbrar",
+          "color": "#139a43"
+        },
+        {
+          "id": "smwvocym4k9wwg",
+          "name": "Entregar",
+          "color": "#0f9fb3"
+        }
+      ],
+      "lanes": [
+        {
+          "id": "lmwvocym4lmt8l",
+          "roleId": "rmwvocxfkrx6mr"
+        },
+        {
+          "id": "lmwvocym4mb4me",
+          "roleId": "rmwvocxfk5cdn0"
+        },
+        {
+          "id": "lmwvocym4n9xpm",
+          "roleId": "rmwvocxfk7pbqh"
+        },
+        {
+          "id": "lmwvocym4oi3qd",
+          "roleId": "rmwvocxfk9s4kn"
+        },
+        {
+          "id": "lmwvocym4ppz6c",
+          "roleId": "rmwvocxfkbw37v"
+        }
+      ],
+      "steps": [
+        {
+          "id": "pmwvocym4qx7fm",
+          "stageId": "smwvocym4gx9bp",
+          "laneId": "lmwvocym4lmt8l",
+          "name": "Pide la factura de su solicitud pagada y elige el cliente de facturación",
+          "type": "CAPTURA",
+          "screen": "Portal del expositor › Mis solicitudes"
+        },
+        {
+          "id": "pmwvocym4rgidp",
+          "stageId": "smwvocym4gx9bp",
+          "laneId": "lmwvocym4mb4me",
+          "name": "Crea la solicitud de factura con la foto de datos fiscales y la prefactura",
+          "type": "AUTOMATICO",
+          "deliverable": "Solicitud de factura (INVOICE_AFTER_PAYMENT)"
+        },
+        {
+          "id": "pmwvocym4sx5zp",
+          "stageId": "smwvocym4hz9jp",
+          "laneId": "lmwvocym4mb4me",
+          "name": "Valida RFC, razón social, régimen y C.P. contra la constancia de situación fiscal",
+          "type": "IA"
+        },
+        {
+          "id": "pmwvocym4temro",
+          "stageId": "smwvocym4hz9jp",
+          "laneId": "lmwvocym4mb4me",
+          "name": "¿Los datos fiscales son válidos?",
+          "type": "DECISION",
+          "yes": "pmwvocym4vrbx1",
+          "no": "pmwvocym4umuei"
+        },
+        {
+          "id": "pmwvocym4umuei",
+          "stageId": "smwvocym4hz9jp",
+          "laneId": "lmwvocym4lmt8l",
+          "name": "Corrige sus datos fiscales (la solicitud queda bloqueada)",
+          "type": "TAREA",
+          "days": 1,
+          "screen": "Portal del expositor › Mis solicitudes",
+          "notes": "Al corregir vuelve al paso 3."
+        },
+        {
+          "id": "pmwvocym4vrbx1",
+          "stageId": "smwvocym4i5c64",
+          "laneId": "lmwvocym4n9xpm",
+          "name": "Asegura cliente, evento y recursos en SAE (catálogos espejo)",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym4w8cn8",
+          "stageId": "smwvocym4i5c64",
+          "laneId": "lmwvocym4n9xpm",
+          "name": "Crea la factura en SAE con las partidas de la orden, el evento y la serie de la organización",
+          "type": "AUTOMATICO",
+          "deliverable": "Factura SAE (serie-folio)",
+          "notes": "Idempotente por número de solicitud: si ya existe el documento no se duplica."
+        },
+        {
+          "id": "pmwvocym4x99lf",
+          "stageId": "smwvocym4i5c64",
+          "laneId": "lmwvocym4oi3qd",
+          "name": "Genera el cargo en cuentas por cobrar y aplica el pago registrado en IventIA",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym4y6ptg",
+          "stageId": "smwvocym4jgh9m",
+          "laneId": "lmwvocym4oi3qd",
+          "name": "Timbra el CFDI 4.0 (PUE, forma de pago del cobro) con el PAC",
+          "type": "AUTOMATICO",
+          "deliverable": "XML timbrado y PDF",
+          "notes": "Vía por decidir (sesión 2): A) el conector timbra con el PAC y registra UUID y XML en SAE (CFDI01, ESCFD = T); B) SAE timbra en lote los pendientes y el conector recoge el XML de CFDI01. SAE no documenta timbrado desatendido."
+        },
+        {
+          "id": "pmwvocym4zpfk9",
+          "stageId": "smwvocym4jgh9m",
+          "laneId": "lmwvocym4n9xpm",
+          "name": "¿Timbró sin error?",
+          "type": "DECISION",
+          "yes": "pmwvocym411cgmr",
+          "no": "pmwvocym410y2da"
+        },
+        {
+          "id": "pmwvocym410y2da",
+          "stageId": "smwvocym4jgh9m",
+          "laneId": "lmwvocym4ppz6c",
+          "name": "Atiende el rechazo del PAC en la bandeja de excepciones y reintenta",
+          "type": "TAREA",
+          "slaHours": 4,
+          "screen": "IventIA › Contabilidad",
+          "notes": "Al reintentar vuelve al paso 9."
+        },
+        {
+          "id": "pmwvocym411cgmr",
+          "stageId": "smwvocym4k9wwg",
+          "laneId": "lmwvocym4n9xpm",
+          "name": "Sube XML y PDF a IventIA; valida sello SAT y que el UUID no esté duplicado",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym412vetc",
+          "stageId": "smwvocym4k9wwg",
+          "laneId": "lmwvocym4mb4me",
+          "name": "Marca la solicitud Facturada y la orden facturada",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym413tvl8",
+          "stageId": "smwvocym4k9wwg",
+          "laneId": "lmwvocym4mb4me",
+          "name": "Avisa al expositor (correo y portal) y al coordinador",
+          "type": "AVISO",
+          "notify": [
+            "rmwvocxfkrx6mr",
+            "rmwvocxfk1ju87m"
+          ]
+        },
+        {
+          "id": "pmwvocym4148sbf",
+          "stageId": "smwvocym4k9wwg",
+          "laneId": "lmwvocym4lmt8l",
+          "name": "Descarga el XML y el PDF desde el portal",
+          "type": "ENTREGABLE",
+          "deliverable": "CFDI 4.0 (XML y PDF)",
+          "screen": "Portal del expositor › Mis solicitudes"
+        }
+      ],
+      "views": [
+        {
+          "id": "esf_v0_zprmwvocxfk1bfdfp",
+          "name": "Solicitudes de factura",
+          "roleIds": [
+            "rmwvocxfkbw37v",
+            "rmwvocxfk1ju87m"
+          ],
+          "columns": "Folio, Evento, Expositor, RFC, Total, Estado, Serie-folio SAE, UUID",
+          "groupBy": "Evento"
+        },
+        {
+          "id": "esf_v1_zprmwvocxfk1bfdfp",
+          "name": "Mis facturas",
+          "roleIds": [
+            "rmwvocxfkrx6mr"
+          ],
+          "columns": "Solicitud, Fecha, Total, UUID, XML, PDF"
+        }
+      ],
+      "reports": [
+        {
+          "id": "esf_r0_zprmwvocxfk1bfdfp",
+          "name": "Tiempo de solicitud a CFDI",
+          "metric": "Minutos promedio de la solicitud al XML en el portal",
+          "roleIds": [
+            "rmwvocxfkbw37v",
+            "rmwvocxfk37r0ii"
+          ],
+          "frequency": "SEMANAL",
+          "chart": "LINEA"
+        },
+        {
+          "id": "esf_r1_zprmwvocxfk1bfdfp",
+          "name": "Facturas automáticas vs. manuales",
+          "metric": "% de solicitudes timbradas sin intervención",
+          "roleIds": [
+            "rmwvocxfk37r0ii"
+          ],
+          "frequency": "MENSUAL",
+          "chart": "KPI"
+        }
+      ],
+      "story": {
+        "phase": "Facturar",
+        "phaseHint": "CFDI de ingreso",
+        "como": "Expositor",
+        "quiero": "pedir mi factura en el portal y recibirla timbrada sin esperar",
+        "para": "cerrar mi trámite fiscal sin correos ni llamadas",
+        "module": "Portal del expositor · IventIA › Contabilidad",
+        "org": "Expo Santa Fe",
+        "criteria": [
+          "Sólo se factura lo pagado (PUE) o lo autorizado (PPD)",
+          "Sólo se acepta XML con sello SAT y UUID no duplicado",
+          "Tiempo objetivo: menos de 10 minutos de la solicitud al CFDI en el portal",
+          "Toda falla del PAC llega a la bandeja de excepciones del Contador",
+          "El flujo es idéntico para SA, KIU y A&B (cambia la serie)"
+        ],
+        "depends": [
+          "zprmwvocxfkkc83c"
+        ],
+        "authorizedBy": [
+          "Gerente de Contabilidad · Expo Santa Fe",
+          "Gerente de Administración y Finanzas · Expo Santa Fe",
+          "Gerente de Sistemas · Expo Santa Fe",
+          "Consumatum"
+        ],
+        "notes": [],
+        "doc": "https://drive.google.com/file/d/14qFtupXkWm03CsUR6mYtzxxBH_gAPJ7L/view"
+      },
+      "startDate": "2027-01-11"
+    },
+    "zprmwvocxfk1xw4iy": {
+      "id": "zprmwvocxfk1xw4iy",
+      "name": "Facturar · Antes del pago (PPD) y complemento de pago",
+      "goal": "Facturar a los clientes autorizados antes de que paguen y cerrar el ciclo fiscal con el complemento de pago cuando el dinero llega.",
+      "current": "La factura previa se autoriza por correo; el complemento de pago se emite a mano y a veces no se emite.",
+      "future": "El coordinador autoriza en IventIA (queda auditado), SAE emite la factura PPD con su cargo en cuentas por cobrar y, al registrarse el pago en IventIA, SAE emite y timbra el complemento de pago (REP).",
+      "trigger": "FORMULARIO",
+      "stages": [
+        {
+          "id": "smwvocym415dqrs",
+          "name": "Solicitar",
+          "color": "#1b6ef3"
+        },
+        {
+          "id": "smwvocym416dcns",
+          "name": "Autorizar",
+          "color": "#7b2ff7"
+        },
+        {
+          "id": "smwvocym417s5jb",
+          "name": "Facturar",
+          "color": "#f08c00"
+        },
+        {
+          "id": "smwvocym41807ji",
+          "name": "Cobrar",
+          "color": "#139a43"
+        },
+        {
+          "id": "smwvocym41917gy",
+          "name": "Complementar",
+          "color": "#0f9fb3"
+        }
+      ],
+      "lanes": [
+        {
+          "id": "lmwvocym41axhz3",
+          "roleId": "rmwvocxfkrx6mr"
+        },
+        {
+          "id": "lmwvocym41bhjvy",
+          "roleId": "rmwvocxfk1ju87m"
+        },
+        {
+          "id": "lmwvocym41cx0ho",
+          "roleId": "rmwvocxfk5cdn0"
+        },
+        {
+          "id": "lmwvocym41dkwzj",
+          "roleId": "rmwvocxfk7pbqh"
+        },
+        {
+          "id": "lmwvocym41eft7r",
+          "roleId": "rmwvocxfk9s4kn"
+        }
+      ],
+      "steps": [
+        {
+          "id": "pmwvocym41fc8m1",
+          "stageId": "smwvocym415dqrs",
+          "laneId": "lmwvocym41axhz3",
+          "name": "Pide factura antes de pagar (cliente habilitado en el evento)",
+          "type": "CAPTURA",
+          "screen": "Portal del expositor › Mis solicitudes"
+        },
+        {
+          "id": "pmwvocym41gruc1",
+          "stageId": "smwvocym416dcns",
+          "laneId": "lmwvocym41bhjvy",
+          "name": "Autoriza la factura previa al pago",
+          "type": "AUTORIZACION",
+          "slaHours": 24,
+          "screen": "IventIA › Mi espacio",
+          "notes": "Si rechaza termina y se avisa al expositor. La autorización queda auditada.",
+          "no": "END"
+        },
+        {
+          "id": "pmwvocym41h3o6n",
+          "stageId": "smwvocym417s5jb",
+          "laneId": "lmwvocym41dkwzj",
+          "name": "Crea la factura PPD (forma de pago 99) en SAE con su cargo en cuentas por cobrar",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym41idaen",
+          "stageId": "smwvocym417s5jb",
+          "laneId": "lmwvocym41eft7r",
+          "name": "Timbra el CFDI y lo regresa a IventIA",
+          "type": "AUTOMATICO",
+          "deliverable": "CFDI PPD"
+        },
+        {
+          "id": "pmwvocym41j6dnh",
+          "stageId": "smwvocym417s5jb",
+          "laneId": "lmwvocym41cx0ho",
+          "name": "Publica XML y PDF en el portal y avisa al expositor",
+          "type": "AVISO",
+          "notify": [
+            "rmwvocxfkrx6mr"
+          ]
+        },
+        {
+          "id": "pmwvocym41ksbee",
+          "stageId": "smwvocym41807ji",
+          "laneId": "lmwvocym41axhz3",
+          "name": "Paga en línea, por transferencia o en piso",
+          "type": "TAREA",
+          "days": 5
+        },
+        {
+          "id": "pmwvocym41lym8d",
+          "stageId": "smwvocym41807ji",
+          "laneId": "lmwvocym41bhjvy",
+          "name": "Registra o concilia el pago en IventIA",
+          "type": "CAPTURA",
+          "slaHours": 24
+        },
+        {
+          "id": "pmwvocym41m25cx",
+          "stageId": "smwvocym41917gy",
+          "laneId": "lmwvocym41dkwzj",
+          "name": "Registra el abono en cuentas por cobrar de SAE ligado a la factura",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym41nbx7l",
+          "stageId": "smwvocym41917gy",
+          "laneId": "lmwvocym41eft7r",
+          "name": "Timbra el complemento de pago (REP 2.0)",
+          "type": "AUTOMATICO",
+          "deliverable": "Recibo electrónico de pago"
+        },
+        {
+          "id": "pmwvocym41o6ocd",
+          "stageId": "smwvocym41917gy",
+          "laneId": "lmwvocym41cx0ho",
+          "name": "Adjunta el REP a la solicitud y avisa al expositor",
+          "type": "AVISO",
+          "notify": [
+            "rmwvocxfkrx6mr",
+            "rmwvocxfk1ju87m"
+          ]
+        }
+      ],
+      "views": [],
+      "reports": [],
+      "story": {
+        "phase": "Facturar",
+        "phaseHint": "CFDI de ingreso",
+        "como": "Coordinador SA",
+        "quiero": "autorizar facturas antes del pago y que el complemento salga solo al cobrar",
+        "para": "dar crédito a clientes confiables sin perder el control fiscal",
+        "module": "IventIA › Mi espacio · Contabilidad",
+        "org": "Expo Santa Fe",
+        "criteria": [
+          "Toda factura sin pago sale con PPD y forma de pago 99",
+          "La autorización queda auditada con quién y cuándo",
+          "Cada pago registrado genera su REP ligado al UUID de la factura",
+          "El saldo insoluto en IventIA y SAE es el mismo"
+        ],
+        "depends": [
+          "zprmwvocxfkkc83c"
+        ],
+        "authorizedBy": [
+          "Gerente de Contabilidad · Expo Santa Fe",
+          "Gerente de Administración y Finanzas · Expo Santa Fe",
+          "Gerente de Sistemas · Expo Santa Fe",
+          "Consumatum"
+        ],
+        "notes": [],
+        "doc": "https://drive.google.com/file/d/14qFtupXkWm03CsUR6mYtzxxBH_gAPJ7L/view"
+      },
+      "startDate": "2027-01-11"
+    },
+    "zprmwvocxfk2f9o2p": {
+      "id": "zprmwvocxfk2f9o2p",
+      "name": "Anticipos · Stand y servicios",
+      "goal": "Que el anticipo del expositor se facture y se aplique correctamente a la factura final, con el saldo igual en IventIA y en SAE.",
+      "current": "El anticipo se cobra en IventIA pero en SAE se factura aparte y se aplica a mano; los saldos no cuadran.",
+      "future": "Cada anticipo genera su CFDI de anticipo; la factura final relaciona el anticipo (tipo 07) y SAE salda la cuenta por cobrar con el egreso por aplicación del anticipo.",
+      "trigger": "REGISTRO",
+      "stages": [
+        {
+          "id": "smwvocym41pn09c",
+          "name": "Cobrar anticipo",
+          "color": "#1b6ef3"
+        },
+        {
+          "id": "smwvocym41qquaw",
+          "name": "Facturar anticipo",
+          "color": "#7b2ff7"
+        },
+        {
+          "id": "smwvocym41rgh0p",
+          "name": "Facturar total",
+          "color": "#f08c00"
+        },
+        {
+          "id": "smwvocym41s0rip",
+          "name": "Aplicar anticipo",
+          "color": "#139a43"
+        }
+      ],
+      "lanes": [
+        {
+          "id": "lmwvocym41tvxpj",
+          "roleId": "rmwvocxfk1ju87m"
+        },
+        {
+          "id": "lmwvocym41unc99",
+          "roleId": "rmwvocxfk7pbqh"
+        },
+        {
+          "id": "lmwvocym41vrst3",
+          "roleId": "rmwvocxfk9s4kn"
+        },
+        {
+          "id": "lmwvocym41wf8ot",
+          "roleId": "rmwvocxfk5cdn0"
+        },
+        {
+          "id": "lmwvocym41xgq8d",
+          "roleId": "rmwvocxfkbw37v"
+        }
+      ],
+      "steps": [
+        {
+          "id": "pmwvocym41yhc9y",
+          "stageId": "smwvocym41pn09c",
+          "laneId": "lmwvocym41tvxpj",
+          "name": "Registra el anticipo del expositor en la orden",
+          "type": "CAPTURA",
+          "screen": "IventIA › Solicitudes"
+        },
+        {
+          "id": "pmwvocym41ztxa5",
+          "stageId": "smwvocym41qquaw",
+          "laneId": "lmwvocym41unc99",
+          "name": "Registra el anticipo en cuentas por cobrar de SAE y genera el CFDI de anticipo (serie FxANT, clave 84111506)",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym420uk9y",
+          "stageId": "smwvocym41qquaw",
+          "laneId": "lmwvocym41vrst3",
+          "name": "Timbra el CFDI de anticipo y lo devuelve a IventIA",
+          "type": "AUTOMATICO",
+          "deliverable": "CFDI de anticipo"
+        },
+        {
+          "id": "pmwvocym421u2n1",
+          "stageId": "smwvocym41rgh0p",
+          "laneId": "lmwvocym41tvxpj",
+          "name": "Cierra la orden con el total del evento",
+          "type": "TAREA",
+          "days": 1
+        },
+        {
+          "id": "pmwvocym42274ck",
+          "stageId": "smwvocym41rgh0p",
+          "laneId": "lmwvocym41unc99",
+          "name": "Crea la factura por el total relacionando el anticipo (CFDI relacionado 07)",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym423ach8",
+          "stageId": "smwvocym41s0rip",
+          "laneId": "lmwvocym41vrst3",
+          "name": "Emite el egreso por aplicación del anticipo (serie NCxANT, relación 07) y salda la cuenta por cobrar",
+          "type": "AUTOMATICO",
+          "deliverable": "CFDI de egreso por anticipo"
+        },
+        {
+          "id": "pmwvocym424ze3h",
+          "stageId": "smwvocym41s0rip",
+          "laneId": "lmwvocym41wf8ot",
+          "name": "Muestra al expositor su estado de cuenta con el anticipo aplicado",
+          "type": "AVISO",
+          "notify": [
+            "rmwvocxfkrx6mr"
+          ]
+        },
+        {
+          "id": "pmwvocym425aveu",
+          "stageId": "smwvocym41s0rip",
+          "laneId": "lmwvocym41xgq8d",
+          "name": "Revisa que el saldo de la orden y el de SAE coincidan",
+          "type": "REVISION",
+          "slaHours": 48
+        }
+      ],
+      "views": [],
+      "reports": [],
+      "story": {
+        "phase": "Cobrar",
+        "phaseHint": "Anticipos y cuentas por cobrar",
+        "como": "Contador",
+        "quiero": "que los anticipos se facturen y apliquen solos",
+        "para": "que el saldo del expositor sea el mismo en IventIA, SAE y COI",
+        "module": "IventIA › Solicitudes · Contabilidad",
+        "org": "Expo Santa Fe",
+        "criteria": [
+          "Cada anticipo tiene su CFDI de anticipo",
+          "La factura final relaciona el anticipo (tipo 07)",
+          "El egreso por aplicación salda la cuenta por cobrar",
+          "No se puede aplicar más anticipo que el cobrado"
+        ],
+        "depends": [
+          "zprmwvocxfk1bfdfp"
+        ],
+        "authorizedBy": [
+          "Gerente de Contabilidad · Expo Santa Fe",
+          "Gerente de Administración y Finanzas · Expo Santa Fe",
+          "Gerente de Sistemas · Expo Santa Fe",
+          "Consumatum"
+        ],
+        "notes": [],
+        "doc": "https://drive.google.com/file/d/14qFtupXkWm03CsUR6mYtzxxBH_gAPJ7L/view"
+      },
+      "startDate": "2027-01-11"
+    },
+    "zprmwvocxfk2yz61p": {
+      "id": "zprmwvocxfk2yz61p",
+      "name": "Ajustes · Refacturación, nota de crédito y reembolso",
+      "goal": "Atender cancelaciones, cambios de datos y reembolsos con el CFDI correcto y ligado a la factura original.",
+      "current": "Se pide por correo con carta; el Contador cancela y emite en SAE, y la nota de crédito no queda ligada a la solicitud en IventIA.",
+      "future": "El expositor lo pide en el portal con su carta, se autoriza en IventIA y el conector ejecuta en SAE la sustitución (motivo 01, relación 04) o la nota de crédito (relación 01 bonificación, 03 devolución) y actualiza cuentas por cobrar.",
+      "trigger": "FORMULARIO",
+      "stages": [
+        {
+          "id": "smwvocym4266nce",
+          "name": "Solicitar",
+          "color": "#1b6ef3"
+        },
+        {
+          "id": "smwvocym427c56f",
+          "name": "Autorizar",
+          "color": "#7b2ff7"
+        },
+        {
+          "id": "smwvocym428b9cb",
+          "name": "Ejecutar en SAE",
+          "color": "#f08c00"
+        },
+        {
+          "id": "smwvocym4295y9q",
+          "name": "Cerrar",
+          "color": "#139a43"
+        }
+      ],
+      "lanes": [
+        {
+          "id": "lmwvocym42a8ki2",
+          "roleId": "rmwvocxfkrx6mr"
+        },
+        {
+          "id": "lmwvocym42bqqsn",
+          "roleId": "rmwvocxfk1ju87m"
+        },
+        {
+          "id": "lmwvocym42ctztw",
+          "roleId": "rmwvocxfkbw37v"
+        },
+        {
+          "id": "lmwvocym42dvzlu",
+          "roleId": "rmwvocxfk7pbqh"
+        },
+        {
+          "id": "lmwvocym42egf9q",
+          "roleId": "rmwvocxfk9s4kn"
+        },
+        {
+          "id": "lmwvocym42frl29",
+          "roleId": "rmwvocxfk5cdn0"
+        }
+      ],
+      "steps": [
+        {
+          "id": "pmwvocym42g52oa",
+          "stageId": "smwvocym4266nce",
+          "laneId": "lmwvocym42a8ki2",
+          "name": "Pide cancelación, cambio de datos o reembolso y adjunta su carta",
+          "type": "CAPTURA",
+          "screen": "Portal del expositor › Mis solicitudes"
+        },
+        {
+          "id": "pmwvocym42hqaf1",
+          "stageId": "smwvocym427c56f",
+          "laneId": "lmwvocym42bqqsn",
+          "name": "Revisa la carta, el motivo y el plazo (5 días antes del montaje)",
+          "type": "REVISION",
+          "slaHours": 24
+        },
+        {
+          "id": "pmwvocym42ix12r",
+          "stageId": "smwvocym427c56f",
+          "laneId": "lmwvocym42ctztw",
+          "name": "Autoriza el ajuste; la nota de crédito no excede lo pagado",
+          "type": "AUTORIZACION",
+          "slaHours": 48,
+          "no": "END"
+        },
+        {
+          "id": "pmwvocym42j7zb3",
+          "stageId": "smwvocym428b9cb",
+          "laneId": "lmwvocym42dvzlu",
+          "name": "Refacturación: cancela con motivo 01 y emite el CFDI sustituto (relación 04)",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym42kwtdx",
+          "stageId": "smwvocym428b9cb",
+          "laneId": "lmwvocym42dvzlu",
+          "name": "Nota de crédito: genera en SAE la devolución (relación 03) o la bonificación (relación 01) ligada a la factura",
+          "type": "AUTOMATICO"
+        },
+        {
+          "id": "pmwvocym42l9eh4",
+          "stageId": "smwvocym428b9cb",
+          "laneId": "lmwvocym42egf9q",
+          "name": "Timbra y actualiza cuentas por cobrar",
+          "type": "AUTOMATICO",
+          "deliverable": "CFDI sustituto o nota de crédito"
+        },
+        {
+          "id": "pmwvocym42mp6y7",
+          "stageId": "smwvocym4295y9q",
+          "laneId": "lmwvocym42ctztw",
+          "name": "Programa el reembolso (10 días hábiles) y adjunta el comprobante",
+          "type": "ENTREGABLE",
+          "days": 2,
+          "deliverable": "Comprobante de reembolso"
+        },
+        {
+          "id": "pmwvocym42nd7v3",
+          "stageId": "smwvocym4295y9q",
+          "laneId": "lmwvocym42frl29",
+          "name": "Liga el ajuste a la solicitud original y avisa al expositor y al coordinador",
+          "type": "AVISO",
+          "notify": [
+            "rmwvocxfkrx6mr",
+            "rmwvocxfk1ju87m"
+          ]
+        }
+      ],
+      "views": [],
+      "reports": [],
+      "story": {
+        "phase": "Ajustar",
+        "phaseHint": "Cancelación, nota de crédito, reembolso",
+        "como": "Contador",
+        "quiero": "ejecutar refacturaciones, notas de crédito y reembolsos desde IventIA",
+        "para": "que cada ajuste quede ligado a la factura original y autorizado",
+        "module": "Portal del expositor · IventIA › Contabilidad",
+        "org": "Expo Santa Fe",
+        "criteria": [
+          "La nota de crédito no excede lo pagado",
+          "La cancelación usa el motivo SAT correcto y relaciona el sustituto",
+          "Reembolso a 10 días hábiles de aprobado",
+          "Cancelación de lo pagado se pide 5 días antes del montaje"
+        ],
+        "depends": [
+          "zprmwvocxfk1bfdfp"
+        ],
+        "authorizedBy": [
+          "Gerente de Contabilidad · Expo Santa Fe",
+          "Gerente de Administración y Finanzas · Expo Santa Fe",
+          "Gerente de Sistemas · Expo Santa Fe",
+          "Consumatum"
+        ],
+        "notes": [],
+        "doc": "https://drive.google.com/file/d/14qFtupXkWm03CsUR6mYtzxxBH_gAPJ7L/view"
+      },
+      "startDate": "2027-01-11"
+    },
+    "zprmwvocxfk3f0hvp": {
+      "id": "zprmwvocxfk3f0hvp",
+      "name": "Cierre contable · Conciliación IventIA–SAE–COI",
+      "goal": "Que cada día IventIA, SAE y la contabilidad (COI) digan lo mismo: facturado, cobrado, anticipos y saldos por evento.",
+      "current": "La conciliación es mensual y en Excel; las diferencias se descubren al cierre.",
+      "future": "Cada noche el conector compara IventIA contra SAE, la IA propone la causa de cada diferencia, el Contador la resuelve y SAE envía las pólizas a COI.",
+      "trigger": "PROGRAMADO",
+      "stages": [
+        {
+          "id": "smwvocym42olwlm",
+          "name": "Conciliar",
+          "color": "#1b6ef3"
+        },
+        {
+          "id": "smwvocym42ps4id",
+          "name": "Contabilizar",
+          "color": "#7b2ff7"
+        },
+        {
+          "id": "smwvocym42qf14i",
+          "name": "Reportar",
+          "color": "#f08c00"
+        }
+      ],
+      "lanes": [
+        {
+          "id": "lmwvocym42r0jp5",
+          "roleId": "rmwvocxfk7pbqh"
+        },
+        {
+          "id": "lmwvocym42smr3c",
+          "roleId": "rmwvocxfk5cdn0"
+        },
+        {
+          "id": "lmwvocym42tz8x5",
+          "roleId": "rmwvocxfkbw37v"
+        },
+        {
+          "id": "lmwvocym42uahjg",
+          "roleId": "rmwvocxfk9s4kn"
+        },
+        {
+          "id": "lmwvocym42v9r7h",
+          "roleId": "rmwvocxfk37r0ii"
+        }
+      ],
+      "steps": [
+        {
+          "id": "pmwvocym42wyokx",
+          "stageId": "smwvocym42olwlm",
+          "laneId": "lmwvocym42r0jp5",
+          "name": "Compara órdenes, pagos y facturas de IventIA contra SAE (folio, UUID, importe y saldo)",
+          "type": "AUTOMATICO",
+          "deliverable": "Reporte de diferencias"
+        },
+        {
+          "id": "pmwvocym42x2erw",
+          "stageId": "smwvocym42olwlm",
+          "laneId": "lmwvocym42smr3c",
+          "name": "Explica cada diferencia y propone la causa",
+          "type": "IA"
+        },
+        {
+          "id": "pmwvocym42yifri",
+          "stageId": "smwvocym42olwlm",
+          "laneId": "lmwvocym42tz8x5",
+          "name": "Resuelve las diferencias del día",
+          "type": "TAREA",
+          "slaHours": 24,
+          "screen": "IventIA › Contabilidad"
+        },
+        {
+          "id": "pmwvocym42z66ne",
+          "stageId": "smwvocym42ps4id",
+          "laneId": "lmwvocym42uahjg",
+          "name": "Genera las pólizas de ventas, cobranza y anticipos en COI (interfaz SAE–COI por rango de documentos)",
+          "type": "AUTOMATICO",
+          "deliverable": "Pólizas en COI"
+        },
+        {
+          "id": "pmwvocym4302nt1",
+          "stageId": "smwvocym42ps4id",
+          "laneId": "lmwvocym42v9r7h",
+          "name": "Revisa y autoriza las pólizas del periodo",
+          "type": "AUTORIZACION",
+          "slaHours": 72,
+          "no": "pmwvocym42yifri"
+        },
+        {
+          "id": "pmwvocym431ubpl",
+          "stageId": "smwvocym42qf14i",
+          "laneId": "lmwvocym42smr3c",
+          "name": "Publica el tablero de facturación por evento: facturado, cobrado, anticipos y pendientes",
+          "type": "AUTOMATICO",
+          "deliverable": "Tablero de facturación"
+        },
+        {
+          "id": "pmwvocym432ybja",
+          "stageId": "smwvocym42qf14i",
+          "laneId": "lmwvocym42smr3c",
+          "name": "Avisa el cierre del día a Contabilidad y Finanzas",
+          "type": "AVISO",
+          "notify": [
+            "rmwvocxfkbw37v",
+            "rmwvocxfk37r0ii"
+          ]
+        }
+      ],
+      "views": [
+        {
+          "id": "esf_v0_zprmwvocxfk3f0hvp",
+          "name": "Diferencias del día",
+          "roleIds": [
+            "rmwvocxfkbw37v",
+            "rmwvocxfk37r0ii"
+          ],
+          "columns": "Evento, Documento, IventIA, SAE, Diferencia, Causa propuesta, Responsable",
+          "filter": "Diferencia ≠ 0"
+        }
+      ],
+      "reports": [
+        {
+          "id": "esf_r0_zprmwvocxfk3f0hvp",
+          "name": "Facturación por evento",
+          "metric": "Facturado, cobrado, anticipos y notas de crédito por evento",
+          "roleIds": [
+            "rmwvocxfk37r0ii"
+          ],
+          "frequency": "DIARIO",
+          "chart": "BARRAS"
+        }
+      ],
+      "story": {
+        "phase": "Cerrar",
+        "phaseHint": "Conciliación y pólizas",
+        "como": "Gerente de Contabilidad",
+        "quiero": "ver cada día lo facturado, cobrado y pendiente por evento conciliado contra SAE",
+        "para": "cerrar el mes sin sorpresas",
+        "module": "IventIA › Contabilidad › Conciliación",
+        "org": "Expo Santa Fe",
+        "criteria": [
+          "Conciliación diaria automática con reporte de diferencias",
+          "Cada diferencia tiene responsable y causa",
+          "Las pólizas llegan a COI por la interfaz SAE–COI",
+          "Tablero por evento: facturado, cobrado, anticipos, notas de crédito"
+        ],
+        "depends": [
+          "zprmwvocxfk1bfdfp",
+          "zprmwvocxfk2f9o2p"
+        ],
+        "authorizedBy": [
+          "Gerente de Contabilidad · Expo Santa Fe",
+          "Gerente de Administración y Finanzas · Expo Santa Fe",
+          "Gerente de Sistemas · Expo Santa Fe",
+          "Consumatum"
+        ],
+        "notes": [],
+        "doc": "https://drive.google.com/file/d/14qFtupXkWm03CsUR6mYtzxxBH_gAPJ7L/view"
+      },
+      "startDate": "2027-01-11"
+    }
+  },
+  "meetings": [],
+  "commitments": []
+}

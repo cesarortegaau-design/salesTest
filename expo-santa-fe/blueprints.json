@@ -1,0 +1,1816 @@
+[
+  {
+    "kind": "consumatum.laboratorio.blueprint",
+    "version": 1,
+    "process": {
+      "id": "zprmwvocxfkkc83c",
+      "name": "Catálogos espejo · Sincronizar IventIA → SAE",
+      "goal": "Que todo cliente, evento, recurso y precio que se factura en IventIA exista igual en SAE, con su clave SAE guardada en IventIA, antes de que se pida una factura.",
+      "current": "Contabilidad da de alta al cliente y los conceptos en SAE cuando llega la solicitud; las claves de SAE no viven en IventIA y los nombres no coinciden.",
+      "future": "Cada alta o cambio en IventIA deja un evento en la bitácora de integración; el conector lo crea o actualiza en SAE y guarda la clave SAE en el objeto de IventIA. Los errores quedan en una bandeja.",
+      "trigger": "REGISTRO",
+      "startDate": "2027-01-11"
+    },
+    "roles": [
+      {
+        "id": "rmwvocxfk5cdn0",
+        "name": "IventIA (sistema)",
+        "privileges": [
+          "ver",
+          "recibir avisos"
+        ]
+      },
+      {
+        "id": "rmwvocxfk7pbqh",
+        "name": "Conector IventIA–SAE",
+        "privileges": [
+          "ver",
+          "autorizar"
+        ]
+      },
+      {
+        "id": "rmwvocxfk9s4kn",
+        "name": "Aspel SAE / PAC (sistema)",
+        "privileges": [
+          "ver"
+        ]
+      },
+      {
+        "id": "rmwvocxfkbw37v",
+        "name": "Contador",
+        "privileges": [
+          "ver",
+          "ejecutar",
+          "recibir avisos"
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "id": "smwvocym30sxeb",
+        "name": "Detectar"
+      },
+      {
+        "id": "smwvocym313uhj",
+        "name": "Mapear"
+      },
+      {
+        "id": "smwvocym32j6yt",
+        "name": "Registrar en SAE"
+      },
+      {
+        "id": "smwvocym33xy0n",
+        "name": "Confirmar"
+      }
+    ],
+    "steps": [
+      {
+        "key": "01_registra_en_la_bitacora_de_integracio",
+        "id": "pmwvocym48rr8p",
+        "name": "Registra en la bitácora de integración el alta o cambio de cliente, evento, recurso o lista de precios",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Detectar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "deliverable": "Evento de integración (outbox)",
+        "notify": [],
+        "instructions": "Llave de idempotencia: objeto + id + versión (updatedAt).\nEntregable: Evento de integración (outbox)"
+      },
+      {
+        "key": "02_toma_el_evento_y_busca_su_espejo_en_s",
+        "id": "pmwvocym49kyvb",
+        "name": "Toma el evento y busca su espejo en SAE por la llave de integración (RFC, código de recurso, código de evento)",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Mapear",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "screen": "Conector (servicio Windows junto al servidor de SAE)",
+        "notify": [],
+        "instructions": "Dónde: Conector (servicio Windows junto al servidor de SAE)"
+      },
+      {
+        "key": "03_valida_obligatorios_rfc_regimen_fisca",
+        "id": "pmwvocym4axpqt",
+        "name": "Valida obligatorios: RFC, régimen fiscal, C.P., uso CFDI, clave SAT de producto/servicio y de unidad",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Mapear",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": []
+      },
+      {
+        "key": "04_los_datos_estan_completos_y_son_valid",
+        "id": "pmwvocym4bqjpl",
+        "name": "¿Los datos están completos y son válidos?",
+        "type": "DECISION",
+        "human": true,
+        "stage": "Mapear",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": [],
+        "yes": "06_da_de_alta_o_actualiza_el_cliente_el_",
+        "no": "05_corrige_el_dato_en_el_catalogo_de_ive"
+      },
+      {
+        "key": "05_corrige_el_dato_en_el_catalogo_de_ive",
+        "id": "pmwvocym4cz4zc",
+        "name": "Corrige el dato en el catálogo de IventIA o en la tabla de equivalencias SAT",
+        "type": "TAREA",
+        "human": true,
+        "stage": "Mapear",
+        "roleId": "rmwvocxfkbw37v",
+        "role": "Contador",
+        "slaHours": 24,
+        "screen": "IventIA › Bandeja de integración",
+        "notify": [],
+        "instructions": "Al guardar, el cambio vuelve a la bitácora (paso 1).\nDónde: IventIA › Bandeja de integración"
+      },
+      {
+        "key": "06_da_de_alta_o_actualiza_el_cliente_el_",
+        "id": "pmwvocym4dxy8b",
+        "name": "Da de alta o actualiza el cliente, el producto/servicio o la obra/proyecto del evento",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Registrar en SAE",
+        "roleId": "rmwvocxfk9s4kn",
+        "role": "Aspel SAE / PAC (sistema)",
+        "deliverable": "Clave SAE",
+        "notify": [],
+        "instructions": "Tablas CLIE01 / INVE01 (+ campos libres CLIE_CLIB01). Lectura en Firebird; escritura por importación oficial o por el conector validado en una copia de la base (SAE no tiene API pública).\nEntregable: Clave SAE"
+      },
+      {
+        "key": "07_guarda_la_clave_sae_en_el_objeto_de_i",
+        "id": "pmwvocym4euto9",
+        "name": "Guarda la clave SAE en el objeto de IventIA y lo marca Sincronizado",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Confirmar",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": []
+      },
+      {
+        "key": "08_avisa_al_contador_los_errores_de_sinc",
+        "id": "pmwvocym4fj0sq",
+        "name": "Avisa al Contador los errores de sincronización pendientes",
+        "type": "AVISO",
+        "human": false,
+        "stage": "Confirmar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "notify": [
+          {
+            "roleId": "rmwvocxfkbw37v",
+            "role": "Contador"
+          }
+        ]
+      }
+    ],
+    "stories": [
+      {
+        "code": "HU-01",
+        "como": "Conector IventIA–SAE",
+        "quiero": "decidir ¿Los datos están completos y son válidos?",
+        "para": "Que todo cliente, evento, recurso y precio que se factura en IventIA exista igual en SAE, con su clave SAE guardada en IventIA, antes de que se pida una factura.",
+        "criteria": [
+          "Desde su bandeja puede decidir «¿Los datos están completos y son válidos?».",
+          "Si autoriza continúa a «Da de alta o actualiza el cliente, el producto/servicio o la obra/proyecto del evento»; si rechaza regresa a «Corrige el dato en el catálogo de IventIA o en la tabla de equivalencias SAT» con el motivo.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-02",
+        "como": "Contador",
+        "quiero": "corregir el dato en el catálogo de IventIA o en la tabla de equivalencias SAT",
+        "para": "Que todo cliente, evento, recurso y precio que se factura en IventIA exista igual en SAE, con su clave SAE guardada en IventIA, antes de que se pida una factura.",
+        "criteria": [
+          "Desde «IventIA › Bandeja de integración» puede realizar «Corrige el dato en el catálogo de IventIA o en la tabla de equivalencias SAT».",
+          "Tiene 24 h para atenderlo; si vence, se avisa y se escala.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      }
+    ],
+    "views": [
+      {
+        "id": "esf_v0_zprmwvocxfkkc83c",
+        "name": "Bandeja de integración",
+        "roleIds": [
+          "rmwvocxfkbw37v"
+        ],
+        "columns": "Objeto, Código, Acción, Estado, Error, Intentos, Fecha",
+        "filter": "Estado = Error",
+        "groupBy": "Objeto"
+      }
+    ],
+    "reports": [],
+    "notifications": [
+      {
+        "when": "Le llega «¿Los datos están completos y son válidos?»",
+        "to": "Conector IventIA–SAE",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Le llega «Corrige el dato en el catálogo de IventIA o en la tabla de equivalencias SAT»",
+        "to": "Contador",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Vence el SLA de «Corrige el dato en el catálogo de IventIA o en la tabla de equivalencias SAT» (24 h)",
+        "to": "Contador y su jefe",
+        "channel": "Correo y escalamiento"
+      },
+      {
+        "when": "«Avisa al Contador los errores de sincronización pendientes»",
+        "to": "IventIA (sistema)",
+        "channel": "Correo"
+      },
+      {
+        "when": "Termina «Avisa al Contador los errores de sincronización pendientes»",
+        "to": "Contador",
+        "channel": "Correo"
+      }
+    ],
+    "timeline": {
+      "total": 2,
+      "endDate": "2027-01-12"
+    }
+  },
+  {
+    "kind": "consumatum.laboratorio.blueprint",
+    "version": 1,
+    "process": {
+      "id": "zprmwvocxfk1bfdfp",
+      "name": "Facturar · Pago primero (PUE) automática",
+      "goal": "Que el expositor reciba su CFDI timbrado en el portal minutos después de pedirlo, sin que Contabilidad capture nada.",
+      "current": "HU-SA-08: el Contador abre la bandeja, valida RFC, genera el CFDI en SAE con los datos de la prefactura, timbra y adjunta a mano el XML y el PDF.",
+      "future": "La solicitud se valida sola, el conector crea el documento en SAE con las partidas de la orden y el pago, SAE timbra, y el XML/PDF regresan a IventIA y al portal. El Contador sólo ve excepciones.",
+      "trigger": "FORMULARIO",
+      "startDate": "2027-01-11"
+    },
+    "roles": [
+      {
+        "id": "rmwvocxfkrx6mr",
+        "name": "Expositor",
+        "privileges": [
+          "ver",
+          "capturar",
+          "ejecutar",
+          "recibir avisos"
+        ]
+      },
+      {
+        "id": "rmwvocxfk5cdn0",
+        "name": "IventIA (sistema)",
+        "privileges": [
+          "ver",
+          "autorizar",
+          "recibir avisos"
+        ]
+      },
+      {
+        "id": "rmwvocxfk7pbqh",
+        "name": "Conector IventIA–SAE",
+        "privileges": [
+          "ver",
+          "autorizar"
+        ]
+      },
+      {
+        "id": "rmwvocxfk9s4kn",
+        "name": "Aspel SAE / PAC (sistema)",
+        "privileges": [
+          "ver"
+        ]
+      },
+      {
+        "id": "rmwvocxfkbw37v",
+        "name": "Contador",
+        "privileges": [
+          "ver",
+          "ejecutar",
+          "ver reportes"
+        ]
+      },
+      {
+        "id": "rmwvocxfk1ju87m",
+        "name": "Coordinador SA",
+        "privileges": [
+          "recibir avisos",
+          "ver"
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "id": "smwvocym4gx9bp",
+        "name": "Solicitar"
+      },
+      {
+        "id": "smwvocym4hz9jp",
+        "name": "Validar"
+      },
+      {
+        "id": "smwvocym4i5c64",
+        "name": "Registrar en SAE"
+      },
+      {
+        "id": "smwvocym4jgh9m",
+        "name": "Timbrar"
+      },
+      {
+        "id": "smwvocym4k9wwg",
+        "name": "Entregar"
+      }
+    ],
+    "steps": [
+      {
+        "key": "01_pide_la_factura_de_su_solicitud_pagad",
+        "id": "pmwvocym4qx7fm",
+        "name": "Pide la factura de su solicitud pagada y elige el cliente de facturación",
+        "type": "CAPTURA",
+        "human": true,
+        "stage": "Solicitar",
+        "roleId": "rmwvocxfkrx6mr",
+        "role": "Expositor",
+        "screen": "Portal del expositor › Mis solicitudes",
+        "notify": [],
+        "instructions": "Dónde: Portal del expositor › Mis solicitudes"
+      },
+      {
+        "key": "02_crea_la_solicitud_de_factura_con_la_f",
+        "id": "pmwvocym4rgidp",
+        "name": "Crea la solicitud de factura con la foto de datos fiscales y la prefactura",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Solicitar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "deliverable": "Solicitud de factura (INVOICE_AFTER_PAYMENT)",
+        "notify": [],
+        "instructions": "Entregable: Solicitud de factura (INVOICE_AFTER_PAYMENT)"
+      },
+      {
+        "key": "03_valida_rfc_razon_social_regimen_y_c_p",
+        "id": "pmwvocym4sx5zp",
+        "name": "Valida RFC, razón social, régimen y C.P. contra la constancia de situación fiscal",
+        "type": "IA",
+        "human": false,
+        "stage": "Validar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "notify": []
+      },
+      {
+        "key": "04_los_datos_fiscales_son_validos",
+        "id": "pmwvocym4temro",
+        "name": "¿Los datos fiscales son válidos?",
+        "type": "DECISION",
+        "human": true,
+        "stage": "Validar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "notify": [],
+        "yes": "06_asegura_cliente_evento_y_recursos_en_",
+        "no": "05_corrige_sus_datos_fiscales_la_solicit"
+      },
+      {
+        "key": "05_corrige_sus_datos_fiscales_la_solicit",
+        "id": "pmwvocym4umuei",
+        "name": "Corrige sus datos fiscales (la solicitud queda bloqueada)",
+        "type": "TAREA",
+        "human": true,
+        "stage": "Validar",
+        "roleId": "rmwvocxfkrx6mr",
+        "role": "Expositor",
+        "days": 1,
+        "screen": "Portal del expositor › Mis solicitudes",
+        "notify": [],
+        "instructions": "Al corregir vuelve al paso 3.\nDónde: Portal del expositor › Mis solicitudes"
+      },
+      {
+        "key": "06_asegura_cliente_evento_y_recursos_en_",
+        "id": "pmwvocym4vrbx1",
+        "name": "Asegura cliente, evento y recursos en SAE (catálogos espejo)",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Registrar en SAE",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": []
+      },
+      {
+        "key": "07_crea_la_factura_en_sae_con_las_partid",
+        "id": "pmwvocym4w8cn8",
+        "name": "Crea la factura en SAE con las partidas de la orden, el evento y la serie de la organización",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Registrar en SAE",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "deliverable": "Factura SAE (serie-folio)",
+        "notify": [],
+        "instructions": "Idempotente por número de solicitud: si ya existe el documento no se duplica.\nEntregable: Factura SAE (serie-folio)"
+      },
+      {
+        "key": "08_genera_el_cargo_en_cuentas_por_cobrar",
+        "id": "pmwvocym4x99lf",
+        "name": "Genera el cargo en cuentas por cobrar y aplica el pago registrado en IventIA",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Registrar en SAE",
+        "roleId": "rmwvocxfk9s4kn",
+        "role": "Aspel SAE / PAC (sistema)",
+        "notify": []
+      },
+      {
+        "key": "09_timbra_el_cfdi_4_0_pue_forma_de_pago_",
+        "id": "pmwvocym4y6ptg",
+        "name": "Timbra el CFDI 4.0 (PUE, forma de pago del cobro) con el PAC",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Timbrar",
+        "roleId": "rmwvocxfk9s4kn",
+        "role": "Aspel SAE / PAC (sistema)",
+        "deliverable": "XML timbrado y PDF",
+        "notify": [],
+        "instructions": "Vía por decidir (sesión 2): A) el conector timbra con el PAC y registra UUID y XML en SAE (CFDI01, ESCFD = T); B) SAE timbra en lote los pendientes y el conector recoge el XML de CFDI01. SAE no documenta timbrado desatendido.\nEntregable: XML timbrado y PDF"
+      },
+      {
+        "key": "10_timbro_sin_error",
+        "id": "pmwvocym4zpfk9",
+        "name": "¿Timbró sin error?",
+        "type": "DECISION",
+        "human": true,
+        "stage": "Timbrar",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": [],
+        "yes": "12_sube_xml_y_pdf_a_iventia_valida_sello",
+        "no": "11_atiende_el_rechazo_del_pac_en_la_band"
+      },
+      {
+        "key": "11_atiende_el_rechazo_del_pac_en_la_band",
+        "id": "pmwvocym410y2da",
+        "name": "Atiende el rechazo del PAC en la bandeja de excepciones y reintenta",
+        "type": "TAREA",
+        "human": true,
+        "stage": "Timbrar",
+        "roleId": "rmwvocxfkbw37v",
+        "role": "Contador",
+        "slaHours": 4,
+        "screen": "IventIA › Contabilidad",
+        "notify": [],
+        "instructions": "Al reintentar vuelve al paso 9.\nDónde: IventIA › Contabilidad"
+      },
+      {
+        "key": "12_sube_xml_y_pdf_a_iventia_valida_sello",
+        "id": "pmwvocym411cgmr",
+        "name": "Sube XML y PDF a IventIA; valida sello SAT y que el UUID no esté duplicado",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Entregar",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": []
+      },
+      {
+        "key": "13_marca_la_solicitud_facturada_y_la_ord",
+        "id": "pmwvocym412vetc",
+        "name": "Marca la solicitud Facturada y la orden facturada",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Entregar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "notify": []
+      },
+      {
+        "key": "14_avisa_al_expositor_correo_y_portal_y_",
+        "id": "pmwvocym413tvl8",
+        "name": "Avisa al expositor (correo y portal) y al coordinador",
+        "type": "AVISO",
+        "human": false,
+        "stage": "Entregar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "notify": [
+          {
+            "roleId": "rmwvocxfkrx6mr",
+            "role": "Expositor"
+          },
+          {
+            "roleId": "rmwvocxfk1ju87m",
+            "role": "Coordinador SA"
+          }
+        ]
+      },
+      {
+        "key": "15_descarga_el_xml_y_el_pdf_desde_el_por",
+        "id": "pmwvocym4148sbf",
+        "name": "Descarga el XML y el PDF desde el portal",
+        "type": "ENTREGABLE",
+        "human": true,
+        "stage": "Entregar",
+        "roleId": "rmwvocxfkrx6mr",
+        "role": "Expositor",
+        "deliverable": "CFDI 4.0 (XML y PDF)",
+        "screen": "Portal del expositor › Mis solicitudes",
+        "notify": [],
+        "instructions": "Entregable: CFDI 4.0 (XML y PDF)\nDónde: Portal del expositor › Mis solicitudes"
+      }
+    ],
+    "stories": [
+      {
+        "code": "HU-01",
+        "como": "Expositor",
+        "quiero": "pedir la factura de su solicitud pagada y elige el cliente de facturación",
+        "para": "Que el expositor reciba su CFDI timbrado en el portal minutos después de pedirlo, sin que Contabilidad capture nada.",
+        "criteria": [
+          "Desde «Portal del expositor › Mis solicitudes» puede capturar «Pide la factura de su solicitud pagada y elige el cliente de facturación».",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-02",
+        "como": "IventIA (sistema)",
+        "quiero": "decidir ¿Los datos fiscales son válidos?",
+        "para": "Que el expositor reciba su CFDI timbrado en el portal minutos después de pedirlo, sin que Contabilidad capture nada.",
+        "criteria": [
+          "Desde su bandeja puede decidir «¿Los datos fiscales son válidos?».",
+          "Si autoriza continúa a «Asegura cliente, evento y recursos en SAE (catálogos espejo)»; si rechaza regresa a «Corrige sus datos fiscales (la solicitud queda bloqueada)» con el motivo.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-03",
+        "como": "Expositor",
+        "quiero": "corregir sus datos fiscales (la solicitud queda bloqueada)",
+        "para": "Que el expositor reciba su CFDI timbrado en el portal minutos después de pedirlo, sin que Contabilidad capture nada.",
+        "criteria": [
+          "Desde «Portal del expositor › Mis solicitudes» puede realizar «Corrige sus datos fiscales (la solicitud queda bloqueada)».",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-04",
+        "como": "Conector IventIA–SAE",
+        "quiero": "decidir ¿Timbró sin error?",
+        "para": "Que el expositor reciba su CFDI timbrado en el portal minutos después de pedirlo, sin que Contabilidad capture nada.",
+        "criteria": [
+          "Desde su bandeja puede decidir «¿Timbró sin error?».",
+          "Si autoriza continúa a «Sube XML y PDF a IventIA; valida sello SAT y que el UUID no esté duplicado»; si rechaza regresa a «Atiende el rechazo del PAC en la bandeja de excepciones y reintenta» con el motivo.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-05",
+        "como": "Contador",
+        "quiero": "atender el rechazo del PAC en la bandeja de excepciones y reintenta",
+        "para": "Que el expositor reciba su CFDI timbrado en el portal minutos después de pedirlo, sin que Contabilidad capture nada.",
+        "criteria": [
+          "Desde «IventIA › Contabilidad» puede realizar «Atiende el rechazo del PAC en la bandeja de excepciones y reintenta».",
+          "Tiene 4 h para atenderlo; si vence, se avisa y se escala.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-06",
+        "como": "Expositor",
+        "quiero": "descargar el XML y el PDF desde el portal",
+        "para": "Que el expositor reciba su CFDI timbrado en el portal minutos después de pedirlo, sin que Contabilidad capture nada.",
+        "criteria": [
+          "Desde «Portal del expositor › Mis solicitudes» puede entregar «Descarga el XML y el PDF desde el portal» y deja «CFDI 4.0 (XML y PDF)».",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      }
+    ],
+    "views": [
+      {
+        "id": "esf_v0_zprmwvocxfk1bfdfp",
+        "name": "Solicitudes de factura",
+        "roleIds": [
+          "rmwvocxfkbw37v",
+          "rmwvocxfk1ju87m"
+        ],
+        "columns": "Folio, Evento, Expositor, RFC, Total, Estado, Serie-folio SAE, UUID",
+        "groupBy": "Evento"
+      },
+      {
+        "id": "esf_v1_zprmwvocxfk1bfdfp",
+        "name": "Mis facturas",
+        "roleIds": [
+          "rmwvocxfkrx6mr"
+        ],
+        "columns": "Solicitud, Fecha, Total, UUID, XML, PDF"
+      }
+    ],
+    "reports": [
+      {
+        "id": "esf_r0_zprmwvocxfk1bfdfp",
+        "name": "Tiempo de solicitud a CFDI",
+        "metric": "Minutos promedio de la solicitud al XML en el portal",
+        "roleIds": [
+          "rmwvocxfkbw37v",
+          "rmwvocxfk37r0ii"
+        ],
+        "frequency": "SEMANAL",
+        "chart": "LINEA"
+      },
+      {
+        "id": "esf_r1_zprmwvocxfk1bfdfp",
+        "name": "Facturas automáticas vs. manuales",
+        "metric": "% de solicitudes timbradas sin intervención",
+        "roleIds": [
+          "rmwvocxfk37r0ii"
+        ],
+        "frequency": "MENSUAL",
+        "chart": "KPI"
+      }
+    ],
+    "notifications": [
+      {
+        "when": "Le llega «Pide la factura de su solicitud pagada y elige el cliente de facturación»",
+        "to": "Expositor",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Le llega «¿Los datos fiscales son válidos?»",
+        "to": "IventIA (sistema)",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Le llega «Corrige sus datos fiscales (la solicitud queda bloqueada)»",
+        "to": "Expositor",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Le llega «¿Timbró sin error?»",
+        "to": "Conector IventIA–SAE",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Le llega «Atiende el rechazo del PAC en la bandeja de excepciones y reintenta»",
+        "to": "Contador",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Vence el SLA de «Atiende el rechazo del PAC en la bandeja de excepciones y reintenta» (4 h)",
+        "to": "Contador y su jefe",
+        "channel": "Correo y escalamiento"
+      },
+      {
+        "when": "«Avisa al expositor (correo y portal) y al coordinador»",
+        "to": "IventIA (sistema)",
+        "channel": "Correo"
+      },
+      {
+        "when": "Termina «Avisa al expositor (correo y portal) y al coordinador»",
+        "to": "Expositor",
+        "channel": "Correo"
+      },
+      {
+        "when": "Termina «Avisa al expositor (correo y portal) y al coordinador»",
+        "to": "Coordinador SA",
+        "channel": "Correo"
+      },
+      {
+        "when": "Le llega «Descarga el XML y el PDF desde el portal»",
+        "to": "Expositor",
+        "channel": "Bandeja y correo"
+      }
+    ],
+    "timeline": {
+      "total": 6,
+      "endDate": "2027-01-18"
+    }
+  },
+  {
+    "kind": "consumatum.laboratorio.blueprint",
+    "version": 1,
+    "process": {
+      "id": "zprmwvocxfk1xw4iy",
+      "name": "Facturar · Antes del pago (PPD) y complemento de pago",
+      "goal": "Facturar a los clientes autorizados antes de que paguen y cerrar el ciclo fiscal con el complemento de pago cuando el dinero llega.",
+      "current": "La factura previa se autoriza por correo; el complemento de pago se emite a mano y a veces no se emite.",
+      "future": "El coordinador autoriza en IventIA (queda auditado), SAE emite la factura PPD con su cargo en cuentas por cobrar y, al registrarse el pago en IventIA, SAE emite y timbra el complemento de pago (REP).",
+      "trigger": "FORMULARIO",
+      "startDate": "2027-01-11"
+    },
+    "roles": [
+      {
+        "id": "rmwvocxfkrx6mr",
+        "name": "Expositor",
+        "privileges": [
+          "ver",
+          "capturar",
+          "recibir avisos",
+          "ejecutar"
+        ]
+      },
+      {
+        "id": "rmwvocxfk1ju87m",
+        "name": "Coordinador SA",
+        "privileges": [
+          "ver",
+          "autorizar",
+          "capturar",
+          "recibir avisos"
+        ]
+      },
+      {
+        "id": "rmwvocxfk5cdn0",
+        "name": "IventIA (sistema)",
+        "privileges": [
+          "ver",
+          "recibir avisos"
+        ]
+      },
+      {
+        "id": "rmwvocxfk7pbqh",
+        "name": "Conector IventIA–SAE",
+        "privileges": [
+          "ver"
+        ]
+      },
+      {
+        "id": "rmwvocxfk9s4kn",
+        "name": "Aspel SAE / PAC (sistema)",
+        "privileges": [
+          "ver"
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "id": "smwvocym415dqrs",
+        "name": "Solicitar"
+      },
+      {
+        "id": "smwvocym416dcns",
+        "name": "Autorizar"
+      },
+      {
+        "id": "smwvocym417s5jb",
+        "name": "Facturar"
+      },
+      {
+        "id": "smwvocym41807ji",
+        "name": "Cobrar"
+      },
+      {
+        "id": "smwvocym41917gy",
+        "name": "Complementar"
+      }
+    ],
+    "steps": [
+      {
+        "key": "01_pide_factura_antes_de_pagar_cliente_h",
+        "id": "pmwvocym41fc8m1",
+        "name": "Pide factura antes de pagar (cliente habilitado en el evento)",
+        "type": "CAPTURA",
+        "human": true,
+        "stage": "Solicitar",
+        "roleId": "rmwvocxfkrx6mr",
+        "role": "Expositor",
+        "screen": "Portal del expositor › Mis solicitudes",
+        "notify": [],
+        "instructions": "Dónde: Portal del expositor › Mis solicitudes"
+      },
+      {
+        "key": "02_autoriza_la_factura_previa_al_pago",
+        "id": "pmwvocym41gruc1",
+        "name": "Autoriza la factura previa al pago",
+        "type": "AUTORIZACION",
+        "human": true,
+        "stage": "Autorizar",
+        "roleId": "rmwvocxfk1ju87m",
+        "role": "Coordinador SA",
+        "slaHours": 24,
+        "screen": "IventIA › Mi espacio",
+        "notify": [],
+        "no": "END",
+        "instructions": "Si rechaza termina y se avisa al expositor. La autorización queda auditada.\nDónde: IventIA › Mi espacio"
+      },
+      {
+        "key": "03_crea_la_factura_ppd_forma_de_pago_99_",
+        "id": "pmwvocym41h3o6n",
+        "name": "Crea la factura PPD (forma de pago 99) en SAE con su cargo en cuentas por cobrar",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Facturar",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": []
+      },
+      {
+        "key": "04_timbra_el_cfdi_y_lo_regresa_a_iventia",
+        "id": "pmwvocym41idaen",
+        "name": "Timbra el CFDI y lo regresa a IventIA",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Facturar",
+        "roleId": "rmwvocxfk9s4kn",
+        "role": "Aspel SAE / PAC (sistema)",
+        "deliverable": "CFDI PPD",
+        "notify": [],
+        "instructions": "Entregable: CFDI PPD"
+      },
+      {
+        "key": "05_publica_xml_y_pdf_en_el_portal_y_avis",
+        "id": "pmwvocym41j6dnh",
+        "name": "Publica XML y PDF en el portal y avisa al expositor",
+        "type": "AVISO",
+        "human": false,
+        "stage": "Facturar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "notify": [
+          {
+            "roleId": "rmwvocxfkrx6mr",
+            "role": "Expositor"
+          }
+        ]
+      },
+      {
+        "key": "06_paga_en_linea_por_transferencia_o_en_",
+        "id": "pmwvocym41ksbee",
+        "name": "Paga en línea, por transferencia o en piso",
+        "type": "TAREA",
+        "human": true,
+        "stage": "Cobrar",
+        "roleId": "rmwvocxfkrx6mr",
+        "role": "Expositor",
+        "days": 5,
+        "notify": []
+      },
+      {
+        "key": "07_registra_o_concilia_el_pago_en_iventi",
+        "id": "pmwvocym41lym8d",
+        "name": "Registra o concilia el pago en IventIA",
+        "type": "CAPTURA",
+        "human": true,
+        "stage": "Cobrar",
+        "roleId": "rmwvocxfk1ju87m",
+        "role": "Coordinador SA",
+        "slaHours": 24,
+        "notify": []
+      },
+      {
+        "key": "08_registra_el_abono_en_cuentas_por_cobr",
+        "id": "pmwvocym41m25cx",
+        "name": "Registra el abono en cuentas por cobrar de SAE ligado a la factura",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Complementar",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": []
+      },
+      {
+        "key": "09_timbra_el_complemento_de_pago_rep_2_0",
+        "id": "pmwvocym41nbx7l",
+        "name": "Timbra el complemento de pago (REP 2.0)",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Complementar",
+        "roleId": "rmwvocxfk9s4kn",
+        "role": "Aspel SAE / PAC (sistema)",
+        "deliverable": "Recibo electrónico de pago",
+        "notify": [],
+        "instructions": "Entregable: Recibo electrónico de pago"
+      },
+      {
+        "key": "10_adjunta_el_rep_a_la_solicitud_y_avisa",
+        "id": "pmwvocym41o6ocd",
+        "name": "Adjunta el REP a la solicitud y avisa al expositor",
+        "type": "AVISO",
+        "human": false,
+        "stage": "Complementar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "notify": [
+          {
+            "roleId": "rmwvocxfkrx6mr",
+            "role": "Expositor"
+          },
+          {
+            "roleId": "rmwvocxfk1ju87m",
+            "role": "Coordinador SA"
+          }
+        ]
+      }
+    ],
+    "stories": [
+      {
+        "code": "HU-01",
+        "como": "Expositor",
+        "quiero": "pedir factura antes de pagar (cliente habilitado en el evento)",
+        "para": "Facturar a los clientes autorizados antes de que paguen y cerrar el ciclo fiscal con el complemento de pago cuando el dinero llega.",
+        "criteria": [
+          "Desde «Portal del expositor › Mis solicitudes» puede capturar «Pide factura antes de pagar (cliente habilitado en el evento)».",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-02",
+        "como": "Coordinador SA",
+        "quiero": "autorizar la factura previa al pago",
+        "para": "Facturar a los clientes autorizados antes de que paguen y cerrar el ciclo fiscal con el complemento de pago cuando el dinero llega.",
+        "criteria": [
+          "Desde «IventIA › Mi espacio» puede autorizar «Autoriza la factura previa al pago».",
+          "Tiene 24 h para atenderlo; si vence, se avisa y se escala.",
+          "Si autoriza continúa; si rechaza el proceso termina rechazado con el motivo.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-03",
+        "como": "Expositor",
+        "quiero": "pagar en línea, por transferencia o en piso",
+        "para": "Facturar a los clientes autorizados antes de que paguen y cerrar el ciclo fiscal con el complemento de pago cuando el dinero llega.",
+        "criteria": [
+          "Desde su bandeja puede realizar «Paga en línea, por transferencia o en piso».",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-04",
+        "como": "Coordinador SA",
+        "quiero": "registrar o concilia el pago en IventIA",
+        "para": "Facturar a los clientes autorizados antes de que paguen y cerrar el ciclo fiscal con el complemento de pago cuando el dinero llega.",
+        "criteria": [
+          "Desde su bandeja puede capturar «Registra o concilia el pago en IventIA».",
+          "Tiene 24 h para atenderlo; si vence, se avisa y se escala.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      }
+    ],
+    "views": [],
+    "reports": [],
+    "notifications": [
+      {
+        "when": "Le llega «Pide factura antes de pagar (cliente habilitado en el evento)»",
+        "to": "Expositor",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Le llega «Autoriza la factura previa al pago»",
+        "to": "Coordinador SA",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Vence el SLA de «Autoriza la factura previa al pago» (24 h)",
+        "to": "Coordinador SA y su jefe",
+        "channel": "Correo y escalamiento"
+      },
+      {
+        "when": "«Publica XML y PDF en el portal y avisa al expositor»",
+        "to": "IventIA (sistema)",
+        "channel": "Correo"
+      },
+      {
+        "when": "Termina «Publica XML y PDF en el portal y avisa al expositor»",
+        "to": "Expositor",
+        "channel": "Correo"
+      },
+      {
+        "when": "Le llega «Paga en línea, por transferencia o en piso»",
+        "to": "Expositor",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Le llega «Registra o concilia el pago en IventIA»",
+        "to": "Coordinador SA",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Vence el SLA de «Registra o concilia el pago en IventIA» (24 h)",
+        "to": "Coordinador SA y su jefe",
+        "channel": "Correo y escalamiento"
+      },
+      {
+        "when": "«Adjunta el REP a la solicitud y avisa al expositor»",
+        "to": "IventIA (sistema)",
+        "channel": "Correo"
+      },
+      {
+        "when": "Termina «Adjunta el REP a la solicitud y avisa al expositor»",
+        "to": "Expositor",
+        "channel": "Correo"
+      },
+      {
+        "when": "Termina «Adjunta el REP a la solicitud y avisa al expositor»",
+        "to": "Coordinador SA",
+        "channel": "Correo"
+      }
+    ],
+    "timeline": {
+      "total": 8,
+      "endDate": "2027-01-20"
+    }
+  },
+  {
+    "kind": "consumatum.laboratorio.blueprint",
+    "version": 1,
+    "process": {
+      "id": "zprmwvocxfk2f9o2p",
+      "name": "Anticipos · Stand y servicios",
+      "goal": "Que el anticipo del expositor se facture y se aplique correctamente a la factura final, con el saldo igual en IventIA y en SAE.",
+      "current": "El anticipo se cobra en IventIA pero en SAE se factura aparte y se aplica a mano; los saldos no cuadran.",
+      "future": "Cada anticipo genera su CFDI de anticipo; la factura final relaciona el anticipo (tipo 07) y SAE salda la cuenta por cobrar con el egreso por aplicación del anticipo.",
+      "trigger": "REGISTRO",
+      "startDate": "2027-01-11"
+    },
+    "roles": [
+      {
+        "id": "rmwvocxfk1ju87m",
+        "name": "Coordinador SA",
+        "privileges": [
+          "ver",
+          "capturar",
+          "ejecutar"
+        ]
+      },
+      {
+        "id": "rmwvocxfk7pbqh",
+        "name": "Conector IventIA–SAE",
+        "privileges": [
+          "ver"
+        ]
+      },
+      {
+        "id": "rmwvocxfk9s4kn",
+        "name": "Aspel SAE / PAC (sistema)",
+        "privileges": [
+          "ver"
+        ]
+      },
+      {
+        "id": "rmwvocxfk5cdn0",
+        "name": "IventIA (sistema)",
+        "privileges": [
+          "ver",
+          "recibir avisos"
+        ]
+      },
+      {
+        "id": "rmwvocxfkbw37v",
+        "name": "Contador",
+        "privileges": [
+          "ver",
+          "revisar"
+        ]
+      },
+      {
+        "id": "rmwvocxfkrx6mr",
+        "name": "Expositor",
+        "privileges": [
+          "recibir avisos"
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "id": "smwvocym41pn09c",
+        "name": "Cobrar anticipo"
+      },
+      {
+        "id": "smwvocym41qquaw",
+        "name": "Facturar anticipo"
+      },
+      {
+        "id": "smwvocym41rgh0p",
+        "name": "Facturar total"
+      },
+      {
+        "id": "smwvocym41s0rip",
+        "name": "Aplicar anticipo"
+      }
+    ],
+    "steps": [
+      {
+        "key": "01_registra_el_anticipo_del_expositor_en",
+        "id": "pmwvocym41yhc9y",
+        "name": "Registra el anticipo del expositor en la orden",
+        "type": "CAPTURA",
+        "human": true,
+        "stage": "Cobrar anticipo",
+        "roleId": "rmwvocxfk1ju87m",
+        "role": "Coordinador SA",
+        "screen": "IventIA › Solicitudes",
+        "notify": [],
+        "instructions": "Dónde: IventIA › Solicitudes"
+      },
+      {
+        "key": "02_registra_el_anticipo_en_cuentas_por_c",
+        "id": "pmwvocym41ztxa5",
+        "name": "Registra el anticipo en cuentas por cobrar de SAE y genera el CFDI de anticipo (serie FxANT, clave 84111506)",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Facturar anticipo",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": []
+      },
+      {
+        "key": "03_timbra_el_cfdi_de_anticipo_y_lo_devue",
+        "id": "pmwvocym420uk9y",
+        "name": "Timbra el CFDI de anticipo y lo devuelve a IventIA",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Facturar anticipo",
+        "roleId": "rmwvocxfk9s4kn",
+        "role": "Aspel SAE / PAC (sistema)",
+        "deliverable": "CFDI de anticipo",
+        "notify": [],
+        "instructions": "Entregable: CFDI de anticipo"
+      },
+      {
+        "key": "04_cierra_la_orden_con_el_total_del_even",
+        "id": "pmwvocym421u2n1",
+        "name": "Cierra la orden con el total del evento",
+        "type": "TAREA",
+        "human": true,
+        "stage": "Facturar total",
+        "roleId": "rmwvocxfk1ju87m",
+        "role": "Coordinador SA",
+        "days": 1,
+        "notify": []
+      },
+      {
+        "key": "05_crea_la_factura_por_el_total_relacion",
+        "id": "pmwvocym42274ck",
+        "name": "Crea la factura por el total relacionando el anticipo (CFDI relacionado 07)",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Facturar total",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": []
+      },
+      {
+        "key": "06_emite_el_egreso_por_aplicacion_del_an",
+        "id": "pmwvocym423ach8",
+        "name": "Emite el egreso por aplicación del anticipo (serie NCxANT, relación 07) y salda la cuenta por cobrar",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Aplicar anticipo",
+        "roleId": "rmwvocxfk9s4kn",
+        "role": "Aspel SAE / PAC (sistema)",
+        "deliverable": "CFDI de egreso por anticipo",
+        "notify": [],
+        "instructions": "Entregable: CFDI de egreso por anticipo"
+      },
+      {
+        "key": "07_muestra_al_expositor_su_estado_de_cue",
+        "id": "pmwvocym424ze3h",
+        "name": "Muestra al expositor su estado de cuenta con el anticipo aplicado",
+        "type": "AVISO",
+        "human": false,
+        "stage": "Aplicar anticipo",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "notify": [
+          {
+            "roleId": "rmwvocxfkrx6mr",
+            "role": "Expositor"
+          }
+        ]
+      },
+      {
+        "key": "08_revisa_que_el_saldo_de_la_orden_y_el_",
+        "id": "pmwvocym425aveu",
+        "name": "Revisa que el saldo de la orden y el de SAE coincidan",
+        "type": "REVISION",
+        "human": true,
+        "stage": "Aplicar anticipo",
+        "roleId": "rmwvocxfkbw37v",
+        "role": "Contador",
+        "slaHours": 48,
+        "notify": []
+      }
+    ],
+    "stories": [
+      {
+        "code": "HU-01",
+        "como": "Coordinador SA",
+        "quiero": "registrar el anticipo del expositor en la orden",
+        "para": "Que el anticipo del expositor se facture y se aplique correctamente a la factura final, con el saldo igual en IventIA y en SAE.",
+        "criteria": [
+          "Desde «IventIA › Solicitudes» puede capturar «Registra el anticipo del expositor en la orden».",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-02",
+        "como": "Coordinador SA",
+        "quiero": "cerrar la orden con el total del evento",
+        "para": "Que el anticipo del expositor se facture y se aplique correctamente a la factura final, con el saldo igual en IventIA y en SAE.",
+        "criteria": [
+          "Desde su bandeja puede realizar «Cierra la orden con el total del evento».",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-03",
+        "como": "Contador",
+        "quiero": "revisar que el saldo de la orden y el de SAE coincidan",
+        "para": "Que el anticipo del expositor se facture y se aplique correctamente a la factura final, con el saldo igual en IventIA y en SAE.",
+        "criteria": [
+          "Desde su bandeja puede revisar «Revisa que el saldo de la orden y el de SAE coincidan».",
+          "Tiene 48 h para atenderlo; si vence, se avisa y se escala.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      }
+    ],
+    "views": [],
+    "reports": [],
+    "notifications": [
+      {
+        "when": "Le llega «Registra el anticipo del expositor en la orden»",
+        "to": "Coordinador SA",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Le llega «Cierra la orden con el total del evento»",
+        "to": "Coordinador SA",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "«Muestra al expositor su estado de cuenta con el anticipo aplicado»",
+        "to": "IventIA (sistema)",
+        "channel": "Correo"
+      },
+      {
+        "when": "Termina «Muestra al expositor su estado de cuenta con el anticipo aplicado»",
+        "to": "Expositor",
+        "channel": "Correo"
+      },
+      {
+        "when": "Le llega «Revisa que el saldo de la orden y el de SAE coincidan»",
+        "to": "Contador",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Vence el SLA de «Revisa que el saldo de la orden y el de SAE coincidan» (48 h)",
+        "to": "Contador y su jefe",
+        "channel": "Correo y escalamiento"
+      }
+    ],
+    "timeline": {
+      "total": 3,
+      "endDate": "2027-01-13"
+    }
+  },
+  {
+    "kind": "consumatum.laboratorio.blueprint",
+    "version": 1,
+    "process": {
+      "id": "zprmwvocxfk2yz61p",
+      "name": "Ajustes · Refacturación, nota de crédito y reembolso",
+      "goal": "Atender cancelaciones, cambios de datos y reembolsos con el CFDI correcto y ligado a la factura original.",
+      "current": "Se pide por correo con carta; el Contador cancela y emite en SAE, y la nota de crédito no queda ligada a la solicitud en IventIA.",
+      "future": "El expositor lo pide en el portal con su carta, se autoriza en IventIA y el conector ejecuta en SAE la sustitución (motivo 01, relación 04) o la nota de crédito (relación 01 bonificación, 03 devolución) y actualiza cuentas por cobrar.",
+      "trigger": "FORMULARIO",
+      "startDate": "2027-01-11"
+    },
+    "roles": [
+      {
+        "id": "rmwvocxfkrx6mr",
+        "name": "Expositor",
+        "privileges": [
+          "ver",
+          "capturar",
+          "recibir avisos"
+        ]
+      },
+      {
+        "id": "rmwvocxfk1ju87m",
+        "name": "Coordinador SA",
+        "privileges": [
+          "ver",
+          "revisar",
+          "recibir avisos"
+        ]
+      },
+      {
+        "id": "rmwvocxfkbw37v",
+        "name": "Contador",
+        "privileges": [
+          "ver",
+          "autorizar",
+          "ejecutar"
+        ]
+      },
+      {
+        "id": "rmwvocxfk7pbqh",
+        "name": "Conector IventIA–SAE",
+        "privileges": [
+          "ver"
+        ]
+      },
+      {
+        "id": "rmwvocxfk9s4kn",
+        "name": "Aspel SAE / PAC (sistema)",
+        "privileges": [
+          "ver"
+        ]
+      },
+      {
+        "id": "rmwvocxfk5cdn0",
+        "name": "IventIA (sistema)",
+        "privileges": [
+          "ver",
+          "recibir avisos"
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "id": "smwvocym4266nce",
+        "name": "Solicitar"
+      },
+      {
+        "id": "smwvocym427c56f",
+        "name": "Autorizar"
+      },
+      {
+        "id": "smwvocym428b9cb",
+        "name": "Ejecutar en SAE"
+      },
+      {
+        "id": "smwvocym4295y9q",
+        "name": "Cerrar"
+      }
+    ],
+    "steps": [
+      {
+        "key": "01_pide_cancelacion_cambio_de_datos_o_re",
+        "id": "pmwvocym42g52oa",
+        "name": "Pide cancelación, cambio de datos o reembolso y adjunta su carta",
+        "type": "CAPTURA",
+        "human": true,
+        "stage": "Solicitar",
+        "roleId": "rmwvocxfkrx6mr",
+        "role": "Expositor",
+        "screen": "Portal del expositor › Mis solicitudes",
+        "notify": [],
+        "instructions": "Dónde: Portal del expositor › Mis solicitudes"
+      },
+      {
+        "key": "02_revisa_la_carta_el_motivo_y_el_plazo_",
+        "id": "pmwvocym42hqaf1",
+        "name": "Revisa la carta, el motivo y el plazo (5 días antes del montaje)",
+        "type": "REVISION",
+        "human": true,
+        "stage": "Autorizar",
+        "roleId": "rmwvocxfk1ju87m",
+        "role": "Coordinador SA",
+        "slaHours": 24,
+        "notify": []
+      },
+      {
+        "key": "03_autoriza_el_ajuste_la_nota_de_credito",
+        "id": "pmwvocym42ix12r",
+        "name": "Autoriza el ajuste; la nota de crédito no excede lo pagado",
+        "type": "AUTORIZACION",
+        "human": true,
+        "stage": "Autorizar",
+        "roleId": "rmwvocxfkbw37v",
+        "role": "Contador",
+        "slaHours": 48,
+        "notify": [],
+        "no": "END"
+      },
+      {
+        "key": "04_refacturacion_cancela_con_motivo_01_y",
+        "id": "pmwvocym42j7zb3",
+        "name": "Refacturación: cancela con motivo 01 y emite el CFDI sustituto (relación 04)",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Ejecutar en SAE",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": []
+      },
+      {
+        "key": "05_nota_de_credito_genera_en_sae_la_devo",
+        "id": "pmwvocym42kwtdx",
+        "name": "Nota de crédito: genera en SAE la devolución (relación 03) o la bonificación (relación 01) ligada a la factura",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Ejecutar en SAE",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "notify": []
+      },
+      {
+        "key": "06_timbra_y_actualiza_cuentas_por_cobrar",
+        "id": "pmwvocym42l9eh4",
+        "name": "Timbra y actualiza cuentas por cobrar",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Ejecutar en SAE",
+        "roleId": "rmwvocxfk9s4kn",
+        "role": "Aspel SAE / PAC (sistema)",
+        "deliverable": "CFDI sustituto o nota de crédito",
+        "notify": [],
+        "instructions": "Entregable: CFDI sustituto o nota de crédito"
+      },
+      {
+        "key": "07_programa_el_reembolso_10_dias_habiles",
+        "id": "pmwvocym42mp6y7",
+        "name": "Programa el reembolso (10 días hábiles) y adjunta el comprobante",
+        "type": "ENTREGABLE",
+        "human": true,
+        "stage": "Cerrar",
+        "roleId": "rmwvocxfkbw37v",
+        "role": "Contador",
+        "days": 2,
+        "deliverable": "Comprobante de reembolso",
+        "notify": [],
+        "instructions": "Entregable: Comprobante de reembolso"
+      },
+      {
+        "key": "08_liga_el_ajuste_a_la_solicitud_origina",
+        "id": "pmwvocym42nd7v3",
+        "name": "Liga el ajuste a la solicitud original y avisa al expositor y al coordinador",
+        "type": "AVISO",
+        "human": false,
+        "stage": "Cerrar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "notify": [
+          {
+            "roleId": "rmwvocxfkrx6mr",
+            "role": "Expositor"
+          },
+          {
+            "roleId": "rmwvocxfk1ju87m",
+            "role": "Coordinador SA"
+          }
+        ]
+      }
+    ],
+    "stories": [
+      {
+        "code": "HU-01",
+        "como": "Expositor",
+        "quiero": "pedir cancelación, cambio de datos o reembolso y adjunta su carta",
+        "para": "Atender cancelaciones, cambios de datos y reembolsos con el CFDI correcto y ligado a la factura original.",
+        "criteria": [
+          "Desde «Portal del expositor › Mis solicitudes» puede capturar «Pide cancelación, cambio de datos o reembolso y adjunta su carta».",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-02",
+        "como": "Coordinador SA",
+        "quiero": "revisar la carta, el motivo y el plazo (5 días antes del montaje)",
+        "para": "Atender cancelaciones, cambios de datos y reembolsos con el CFDI correcto y ligado a la factura original.",
+        "criteria": [
+          "Desde su bandeja puede revisar «Revisa la carta, el motivo y el plazo (5 días antes del montaje)».",
+          "Tiene 24 h para atenderlo; si vence, se avisa y se escala.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-03",
+        "como": "Contador",
+        "quiero": "autorizar el ajuste; la nota de crédito no excede lo pagado",
+        "para": "Atender cancelaciones, cambios de datos y reembolsos con el CFDI correcto y ligado a la factura original.",
+        "criteria": [
+          "Desde su bandeja puede autorizar «Autoriza el ajuste; la nota de crédito no excede lo pagado».",
+          "Tiene 48 h para atenderlo; si vence, se avisa y se escala.",
+          "Si autoriza continúa; si rechaza el proceso termina rechazado con el motivo.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-04",
+        "como": "Contador",
+        "quiero": "programar el reembolso (10 días hábiles) y adjunta el comprobante",
+        "para": "Atender cancelaciones, cambios de datos y reembolsos con el CFDI correcto y ligado a la factura original.",
+        "criteria": [
+          "Desde su bandeja puede entregar «Programa el reembolso (10 días hábiles) y adjunta el comprobante» y deja «Comprobante de reembolso».",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      }
+    ],
+    "views": [],
+    "reports": [],
+    "notifications": [
+      {
+        "when": "Le llega «Pide cancelación, cambio de datos o reembolso y adjunta su carta»",
+        "to": "Expositor",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Le llega «Revisa la carta, el motivo y el plazo (5 días antes del montaje)»",
+        "to": "Coordinador SA",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Vence el SLA de «Revisa la carta, el motivo y el plazo (5 días antes del montaje)» (24 h)",
+        "to": "Coordinador SA y su jefe",
+        "channel": "Correo y escalamiento"
+      },
+      {
+        "when": "Le llega «Autoriza el ajuste; la nota de crédito no excede lo pagado»",
+        "to": "Contador",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Vence el SLA de «Autoriza el ajuste; la nota de crédito no excede lo pagado» (48 h)",
+        "to": "Contador y su jefe",
+        "channel": "Correo y escalamiento"
+      },
+      {
+        "when": "Le llega «Programa el reembolso (10 días hábiles) y adjunta el comprobante»",
+        "to": "Contador",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "«Liga el ajuste a la solicitud original y avisa al expositor y al coordinador»",
+        "to": "IventIA (sistema)",
+        "channel": "Correo"
+      },
+      {
+        "when": "Termina «Liga el ajuste a la solicitud original y avisa al expositor y al coordinador»",
+        "to": "Expositor",
+        "channel": "Correo"
+      },
+      {
+        "when": "Termina «Liga el ajuste a la solicitud original y avisa al expositor y al coordinador»",
+        "to": "Coordinador SA",
+        "channel": "Correo"
+      }
+    ],
+    "timeline": {
+      "total": 5,
+      "endDate": "2027-01-15"
+    }
+  },
+  {
+    "kind": "consumatum.laboratorio.blueprint",
+    "version": 1,
+    "process": {
+      "id": "zprmwvocxfk3f0hvp",
+      "name": "Cierre contable · Conciliación IventIA–SAE–COI",
+      "goal": "Que cada día IventIA, SAE y la contabilidad (COI) digan lo mismo: facturado, cobrado, anticipos y saldos por evento.",
+      "current": "La conciliación es mensual y en Excel; las diferencias se descubren al cierre.",
+      "future": "Cada noche el conector compara IventIA contra SAE, la IA propone la causa de cada diferencia, el Contador la resuelve y SAE envía las pólizas a COI.",
+      "trigger": "PROGRAMADO",
+      "startDate": "2027-01-11"
+    },
+    "roles": [
+      {
+        "id": "rmwvocxfk7pbqh",
+        "name": "Conector IventIA–SAE",
+        "privileges": [
+          "ver"
+        ]
+      },
+      {
+        "id": "rmwvocxfk5cdn0",
+        "name": "IventIA (sistema)",
+        "privileges": [
+          "ver",
+          "recibir avisos"
+        ]
+      },
+      {
+        "id": "rmwvocxfkbw37v",
+        "name": "Contador",
+        "privileges": [
+          "ver",
+          "ejecutar",
+          "recibir avisos"
+        ]
+      },
+      {
+        "id": "rmwvocxfk9s4kn",
+        "name": "Aspel SAE / PAC (sistema)",
+        "privileges": [
+          "ver"
+        ]
+      },
+      {
+        "id": "rmwvocxfk37r0ii",
+        "name": "Gerente de Contabilidad",
+        "privileges": [
+          "ver",
+          "autorizar",
+          "recibir avisos",
+          "ver reportes"
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "id": "smwvocym42olwlm",
+        "name": "Conciliar"
+      },
+      {
+        "id": "smwvocym42ps4id",
+        "name": "Contabilizar"
+      },
+      {
+        "id": "smwvocym42qf14i",
+        "name": "Reportar"
+      }
+    ],
+    "steps": [
+      {
+        "key": "01_compara_ordenes_pagos_y_facturas_de_i",
+        "id": "pmwvocym42wyokx",
+        "name": "Compara órdenes, pagos y facturas de IventIA contra SAE (folio, UUID, importe y saldo)",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Conciliar",
+        "roleId": "rmwvocxfk7pbqh",
+        "role": "Conector IventIA–SAE",
+        "deliverable": "Reporte de diferencias",
+        "notify": [],
+        "instructions": "Entregable: Reporte de diferencias"
+      },
+      {
+        "key": "02_explica_cada_diferencia_y_propone_la_",
+        "id": "pmwvocym42x2erw",
+        "name": "Explica cada diferencia y propone la causa",
+        "type": "IA",
+        "human": false,
+        "stage": "Conciliar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "notify": []
+      },
+      {
+        "key": "03_resuelve_las_diferencias_del_dia",
+        "id": "pmwvocym42yifri",
+        "name": "Resuelve las diferencias del día",
+        "type": "TAREA",
+        "human": true,
+        "stage": "Conciliar",
+        "roleId": "rmwvocxfkbw37v",
+        "role": "Contador",
+        "slaHours": 24,
+        "screen": "IventIA › Contabilidad",
+        "notify": [],
+        "instructions": "Dónde: IventIA › Contabilidad"
+      },
+      {
+        "key": "04_genera_las_polizas_de_ventas_cobranza",
+        "id": "pmwvocym42z66ne",
+        "name": "Genera las pólizas de ventas, cobranza y anticipos en COI (interfaz SAE–COI por rango de documentos)",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Contabilizar",
+        "roleId": "rmwvocxfk9s4kn",
+        "role": "Aspel SAE / PAC (sistema)",
+        "deliverable": "Pólizas en COI",
+        "notify": [],
+        "instructions": "Entregable: Pólizas en COI"
+      },
+      {
+        "key": "05_revisa_y_autoriza_las_polizas_del_per",
+        "id": "pmwvocym4302nt1",
+        "name": "Revisa y autoriza las pólizas del periodo",
+        "type": "AUTORIZACION",
+        "human": true,
+        "stage": "Contabilizar",
+        "roleId": "rmwvocxfk37r0ii",
+        "role": "Gerente de Contabilidad",
+        "slaHours": 72,
+        "notify": [],
+        "no": "03_resuelve_las_diferencias_del_dia"
+      },
+      {
+        "key": "06_publica_el_tablero_de_facturacion_por",
+        "id": "pmwvocym431ubpl",
+        "name": "Publica el tablero de facturación por evento: facturado, cobrado, anticipos y pendientes",
+        "type": "AUTOMATICO",
+        "human": false,
+        "stage": "Reportar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "deliverable": "Tablero de facturación",
+        "notify": [],
+        "instructions": "Entregable: Tablero de facturación"
+      },
+      {
+        "key": "07_avisa_el_cierre_del_dia_a_contabilida",
+        "id": "pmwvocym432ybja",
+        "name": "Avisa el cierre del día a Contabilidad y Finanzas",
+        "type": "AVISO",
+        "human": false,
+        "stage": "Reportar",
+        "roleId": "rmwvocxfk5cdn0",
+        "role": "IventIA (sistema)",
+        "notify": [
+          {
+            "roleId": "rmwvocxfkbw37v",
+            "role": "Contador"
+          },
+          {
+            "roleId": "rmwvocxfk37r0ii",
+            "role": "Gerente de Contabilidad"
+          }
+        ]
+      }
+    ],
+    "stories": [
+      {
+        "code": "HU-01",
+        "como": "Contador",
+        "quiero": "resolver las diferencias del día",
+        "para": "Que cada día IventIA, SAE y la contabilidad (COI) digan lo mismo: facturado, cobrado, anticipos y saldos por evento.",
+        "criteria": [
+          "Desde «IventIA › Contabilidad» puede realizar «Resuelve las diferencias del día».",
+          "Tiene 24 h para atenderlo; si vence, se avisa y se escala.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      },
+      {
+        "code": "HU-02",
+        "como": "Gerente de Contabilidad",
+        "quiero": "revisar y autoriza las pólizas del periodo",
+        "para": "Que cada día IventIA, SAE y la contabilidad (COI) digan lo mismo: facturado, cobrado, anticipos y saldos por evento.",
+        "criteria": [
+          "Desde su bandeja puede autorizar «Revisa y autoriza las pólizas del periodo».",
+          "Tiene 72 h para atenderlo; si vence, se avisa y se escala.",
+          "Si autoriza continúa; si rechaza regresa a «Resuelve las diferencias del día» con el motivo.",
+          "Queda registro de quién lo hizo y cuándo."
+        ]
+      }
+    ],
+    "views": [
+      {
+        "id": "esf_v0_zprmwvocxfk3f0hvp",
+        "name": "Diferencias del día",
+        "roleIds": [
+          "rmwvocxfkbw37v",
+          "rmwvocxfk37r0ii"
+        ],
+        "columns": "Evento, Documento, IventIA, SAE, Diferencia, Causa propuesta, Responsable",
+        "filter": "Diferencia ≠ 0"
+      }
+    ],
+    "reports": [
+      {
+        "id": "esf_r0_zprmwvocxfk3f0hvp",
+        "name": "Facturación por evento",
+        "metric": "Facturado, cobrado, anticipos y notas de crédito por evento",
+        "roleIds": [
+          "rmwvocxfk37r0ii"
+        ],
+        "frequency": "DIARIO",
+        "chart": "BARRAS"
+      }
+    ],
+    "notifications": [
+      {
+        "when": "Le llega «Resuelve las diferencias del día»",
+        "to": "Contador",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Vence el SLA de «Resuelve las diferencias del día» (24 h)",
+        "to": "Contador y su jefe",
+        "channel": "Correo y escalamiento"
+      },
+      {
+        "when": "Le llega «Revisa y autoriza las pólizas del periodo»",
+        "to": "Gerente de Contabilidad",
+        "channel": "Bandeja y correo"
+      },
+      {
+        "when": "Vence el SLA de «Revisa y autoriza las pólizas del periodo» (72 h)",
+        "to": "Gerente de Contabilidad y su jefe",
+        "channel": "Correo y escalamiento"
+      },
+      {
+        "when": "«Avisa el cierre del día a Contabilidad y Finanzas»",
+        "to": "IventIA (sistema)",
+        "channel": "Correo"
+      },
+      {
+        "when": "Termina «Avisa el cierre del día a Contabilidad y Finanzas»",
+        "to": "Contador",
+        "channel": "Correo"
+      },
+      {
+        "when": "Termina «Avisa el cierre del día a Contabilidad y Finanzas»",
+        "to": "Gerente de Contabilidad",
+        "channel": "Correo"
+      }
+    ],
+    "timeline": {
+      "total": 2,
+      "endDate": "2027-01-12"
+    }
+  }
+]

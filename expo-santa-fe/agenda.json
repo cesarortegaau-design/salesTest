@@ -1,0 +1,213 @@
+{
+  "version": 1,
+  "title": "Agenda de integración IventIA ↔ Aspel SAE",
+  "subtitle": "Expo Santa Fe · 8 sesiones de 90 minutos, del 1 de diciembre de 2026 al 14 de enero de 2027",
+  "source": "Preparada por Consumatum en The Office",
+  "sessions": [
+    {
+      "id": "smwvocyml0ag2",
+      "date": "2026-12-01",
+      "time": "10:00",
+      "duration": 90,
+      "title": "1. Arranque: de HU-SA-08 a la factura automática",
+      "objective": "Acordar alcance, metas y responsables; recorrer cómo se factura hoy en SAE paso a paso.",
+      "questions": "¿Qué versión de SAE y COI usan? ¿Cuántas empresas y series? ¿Quién timbra y con qué PAC? ¿Qué volumen de facturas por evento?",
+      "deliverable": "Alcance firmado, metas (90 % automático) y diagnóstico AS IS",
+      "participants": "Gerencia de Contabilidad, Administración y Finanzas, Sistemas, Servicios al expositor, Consumatum",
+      "area": "Dirección y Contabilidad",
+      "owner": "Consumatum",
+      "status": "Programada"
+    },
+    {
+      "id": "smwvocyml1kec",
+      "date": "2026-12-03",
+      "time": "10:00",
+      "duration": 90,
+      "title": "2. Arquitectura y vía de integración con SAE",
+      "objective": "Elegir la vía soportada (SDK/COM, servicio de Aspel o layouts) y dónde corre el conector.",
+      "questions": "¿Dónde está el servidor de SAE? ¿Hay licencia del SDK? ¿Qué puertos y respaldos hay? ¿Se permite un servicio Windows que salga por HTTPS?",
+      "deliverable": "Decisión de arquitectura, diagrama de red y requisitos del servidor",
+      "participants": "Sistemas, Gerencia de Contabilidad, Consumatum (arquitectura)",
+      "area": "Sistemas",
+      "owner": "Consumatum",
+      "status": "Programada"
+    },
+    {
+      "id": "smwvocyml2sl6",
+      "date": "2026-12-08",
+      "time": "10:00",
+      "duration": 90,
+      "title": "3. Objetos espejo y llaves",
+      "objective": "Mapear cliente, evento, recurso, lista de precios y organización a sus equivalentes en SAE, con llaves y claves SAT.",
+      "questions": "¿Cómo se identifica a un cliente en SAE? ¿El evento es obra, campo libre o centro de costos? ¿Catálogo de productos SAE vs. recursos IventIA?",
+      "deliverable": "Matriz de equivalencias IventIA ↔ SAE y tabla de claves SAT",
+      "participants": "Contabilidad, Servicios al expositor, Consumatum",
+      "area": "Contabilidad",
+      "owner": "Consumatum",
+      "status": "Programada"
+    },
+    {
+      "id": "smwvocyml3ny4",
+      "date": "2026-12-10",
+      "time": "10:00",
+      "duration": 90,
+      "title": "4. Factura pago primero y factura antes del pago",
+      "objective": "Validar el flujo PUE automático y el PPD con complemento de pago.",
+      "questions": "¿Qué serie usa cada organización? ¿Cuándo se emite el REP? ¿Quién autoriza la factura previa?",
+      "deliverable": "Procesos «Facturar» validados y casos de prueba",
+      "participants": "Contabilidad, Servicios al expositor, Consumatum",
+      "area": "Contabilidad",
+      "owner": "Consumatum",
+      "status": "Programada"
+    },
+    {
+      "id": "smwvocyml46ms",
+      "date": "2026-12-15",
+      "time": "10:00",
+      "duration": 90,
+      "title": "5. Anticipos, notas de crédito, refacturación y reembolsos",
+      "objective": "Definir cómo se registran en SAE los anticipos y los ajustes y cómo se ligan a la factura original.",
+      "questions": "¿Cómo factura hoy los anticipos? ¿Usa devoluciones o notas de crédito? ¿Quién autoriza cada ajuste?",
+      "deliverable": "Procesos «Anticipos» y «Ajustes» validados",
+      "participants": "Contabilidad, Administración y Finanzas, Consumatum",
+      "area": "Contabilidad",
+      "owner": "Consumatum",
+      "status": "Programada"
+    },
+    {
+      "id": "smwvocyml5baw",
+      "date": "2026-12-17",
+      "time": "10:00",
+      "duration": 90,
+      "title": "6. Cuentas por cobrar, conciliación y pólizas en COI",
+      "objective": "Acordar la conciliación diaria IventIA–SAE y la interfaz SAE–COI.",
+      "questions": "¿Qué conceptos de cuentas por cobrar usan? ¿Cómo se generan hoy las pólizas? ¿Qué reporte de cierre necesitan?",
+      "deliverable": "Reglas de conciliación, conceptos CxC y póliza modelo",
+      "participants": "Gerencia de Contabilidad, Administración y Finanzas, Consumatum",
+      "area": "Finanzas",
+      "owner": "Consumatum",
+      "status": "Programada"
+    },
+    {
+      "id": "smwvocyml6c11",
+      "date": "2027-01-12",
+      "time": "10:00",
+      "duration": 90,
+      "title": "7. Experiencia del expositor y bandeja de excepciones",
+      "objective": "Revisar avisos del portal, correos, bandeja de excepciones y reportes.",
+      "questions": "¿Qué ve el expositor y cuándo? ¿Qué excepciones atiende el Contador y con qué SLA?",
+      "deliverable": "Pantallas y avisos aprobados",
+      "participants": "Servicios al expositor, Contabilidad, Consumatum (UX)",
+      "area": "Servicios al expositor",
+      "owner": "Consumatum",
+      "status": "Programada"
+    },
+    {
+      "id": "smwvocyml73d0",
+      "date": "2027-01-14",
+      "time": "10:00",
+      "duration": 90,
+      "title": "8. Pruebas, piloto y salida",
+      "objective": "Probar en una empresa de pruebas de SAE, elegir el evento piloto y el plan de salida.",
+      "questions": "¿Hay empresa de pruebas en SAE? ¿Qué evento es el piloto? ¿Cómo se regresa al proceso manual si algo falla?",
+      "deliverable": "Plan de pruebas, evento piloto y criterios de salida",
+      "participants": "Todos",
+      "area": "Dirección",
+      "owner": "Consumatum",
+      "status": "Programada"
+    }
+  ],
+  "roles": [
+    {
+      "id": "rmwvocyml8xlu",
+      "area": "Gerencia de Contabilidad",
+      "responsibility": "Dueña del proceso; valida reglas fiscales, series, anticipos, notas de crédito y pólizas",
+      "input": "Facturas, anticipos y notas de crédito de ejemplo; póliza modelo",
+      "when": "Sesiones 1, 3–6"
+    },
+    {
+      "id": "rmwvocyml9qz5",
+      "area": "Administración y Finanzas",
+      "responsibility": "Autoriza reglas de crédito (PPD), reembolsos y conciliación",
+      "input": "Políticas de crédito y reembolso",
+      "when": "Sesiones 4–6"
+    },
+    {
+      "id": "rmwvocymlae27",
+      "area": "Sistemas",
+      "responsibility": "Servidor de SAE, red, licencias, respaldos y el servicio del conector",
+      "input": "Versión de SAE/COI, inventario del servidor, licencia del SDK",
+      "when": "Sesiones 2 y 8"
+    },
+    {
+      "id": "rmwvocymlbda4",
+      "area": "Servicios al expositor",
+      "responsibility": "Flujo del expositor en el portal y autorizaciones de factura previa",
+      "input": "Casos frecuentes y quejas de facturación",
+      "when": "Sesiones 4 y 7"
+    },
+    {
+      "id": "rmwvocymlc26b",
+      "area": "Consumatum",
+      "responsibility": "Diseño, construcción del conector, cambios en IventIA, pruebas y acompañamiento",
+      "input": "Lienzo, historias de usuario y plan de pruebas",
+      "when": "Todas"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "imwvocymld7m6",
+      "name": "Versión y licencias de Aspel SAE y COI",
+      "detail": "Versión exacta, número de usuarios, SDK/COM disponible",
+      "owner": "Sistemas",
+      "due": "2026-12-03",
+      "status": "Pendiente"
+    },
+    {
+      "id": "imwvocymlei8m",
+      "name": "Acceso al servidor de SAE (o a una copia de la empresa)",
+      "detail": "Para leer la estructura y probar en una empresa de pruebas",
+      "owner": "Sistemas",
+      "due": "2026-12-08",
+      "status": "Pendiente"
+    },
+    {
+      "id": "imwvocymlf6h4",
+      "name": "Catálogo de clientes y productos/servicios de SAE",
+      "detail": "Exportación a Excel para cruzar con IventIA",
+      "owner": "Contabilidad",
+      "due": "2026-12-08",
+      "status": "Pendiente"
+    },
+    {
+      "id": "imwvocymlgd5n",
+      "name": "Series y folios por organización",
+      "detail": "SA, KIU, A&B; ingreso, anticipo, nota de crédito, REP",
+      "owner": "Contabilidad",
+      "due": "2026-12-10",
+      "status": "Pendiente"
+    },
+    {
+      "id": "imwvocymlhah6",
+      "name": "XML de ejemplo",
+      "detail": "Factura PUE, PPD, REP, anticipo, aplicación de anticipo, nota de crédito, sustitución",
+      "owner": "Contabilidad",
+      "due": "2026-12-10",
+      "status": "Pendiente"
+    },
+    {
+      "id": "imwvocymlied3",
+      "name": "Conceptos de cuentas por cobrar y póliza modelo de COI",
+      "owner": "Gerencia de Contabilidad",
+      "due": "2026-12-17",
+      "status": "Pendiente"
+    },
+    {
+      "id": "imwvocymljd0p",
+      "name": "Evento piloto (enero 2027)",
+      "owner": "Servicios al expositor",
+      "due": "2027-01-14",
+      "status": "Pendiente"
+    }
+  ]
+}

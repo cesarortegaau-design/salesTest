@@ -1,0 +1,552 @@
+From fefa23b43945aa497a609785d843ad602e56b46a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 05:21:13 +0000
+Subject: [PATCH] =?UTF-8?q?feat(lab):=20organizaci=C3=B3n=20Expo=20Santa?=
+ =?UTF-8?q?=20Fe=20y=20proyecto=20de=20integraci=C3=B3n=20IventIA=20?=
+ =?UTF-8?q?=E2=86=94=20SAE?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Script y workflow manual que crean la organización Expo Santa Fe, dan de alta a quien la crea como administrador
+y crean en el Laboratorio el proyecto «Integración IventIA ↔ SAE: facturación automática»: ecosistema, objetos
+espejo, 6 procesos con historia de usuario (catálogos, PUE, PPD + REP, anticipos, ajustes, conciliación y COI),
+decisiones abiertas, riesgos, referencias de Aspel y la agenda de 8 sesiones de integración.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KbVHx8fkxvsD6k6bsVp7sr
+---
+ .../workflows/expo-santa-fe-organizacion.yml  |  39 ++
+ apps/api/scripts/data/expo-santa-fe.ts        | 370 ++++++++++++++++++
+ .../api/scripts/expo-santa-fe-organizacion.ts |  96 +++++
+ 3 files changed, 505 insertions(+)
+ create mode 100644 .github/workflows/expo-santa-fe-organizacion.yml
+ create mode 100644 apps/api/scripts/data/expo-santa-fe.ts
+ create mode 100644 apps/api/scripts/expo-santa-fe-organizacion.ts
+
+diff --git a/.github/workflows/expo-santa-fe-organizacion.yml b/.github/workflows/expo-santa-fe-organizacion.yml
+new file mode 100644
+index 0000000..d0158b0
+--- /dev/null
++++ b/.github/workflows/expo-santa-fe-organizacion.yml
+@@ -0,0 +1,39 @@
++name: Organización Expo Santa Fe (alta y proyecto de integración IventIA ↔ SAE)
++
++# Sólo manual: escribe en la base de producción. Crea la organización Expo Santa Fe con sus roles, da de alta a quien la
++# crea (administrador, misma cuenta) y crea en el Laboratorio el proyecto «Integración IventIA ↔ SAE: facturación
++# automática» con su lienzo (ecosistema, objetos espejo, procesos con historia de usuario) y la agenda de sesiones.
++# Idempotente; no borra nada. Requiere el secreto DATABASE_URL.
++on:
++  workflow_dispatch:
++    inputs:
++      correo:
++        description: 'Correo de quien crea la organización (su usuario en The Office)'
++        required: true
++        type: string
++      reemplazar_agenda:
++        description: 'Reemplazar la agenda si el proyecto ya tiene una'
++        required: false
++        type: boolean
++        default: false
++
++jobs:
++  expo-santa-fe:
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++      - uses: pnpm/action-setup@v4
++      - uses: actions/setup-node@v4
++        with:
++          node-version: 20
++          cache: pnpm
++      - run: pnpm install --frozen-lockfile
++      - name: Compilar el paquete de la base (cliente de Prisma y dist)
++        run: pnpm --filter @theoffice/db build
++      - name: Organización, proyecto, lienzo y agenda
++        working-directory: apps/api
++        run: npx --yes tsx@4.19.2 scripts/expo-santa-fe-organizacion.ts
++        env:
++          DATABASE_URL: ${{ secrets.DATABASE_URL }}
++          LAB_EMAIL: ${{ inputs.correo }}
++          FORCE: ${{ inputs.reemplazar_agenda && '1' || '' }}
+diff --git a/apps/api/scripts/data/expo-santa-fe.ts b/apps/api/scripts/data/expo-santa-fe.ts
+new file mode 100644
+index 0000000..23a2023
+--- /dev/null
++++ b/apps/api/scripts/data/expo-santa-fe.ts
+@@ -0,0 +1,370 @@
++/**
++ * Datos del proyecto «Integración IventIA ↔ SAE: facturación automática» de Expo Santa Fe (ver
++ * scripts/expo-santa-fe-organizacion.ts). Funciones puras: arman el lienzo del Laboratorio y la agenda de sesiones.
++ *
++ * Punto de partida: la historia de usuario HU-SA-08 de IventIA («Contabilidad: factura, nota de crédito y reembolso»),
++ * en la que el Contador recibe la solicitud en IventIA, genera y timbra el CFDI en Aspel SAE y sube a mano el XML y el PDF.
++ * Propuesta: la solicitud fluye sola a SAE (cliente, obra/evento, productos, documento, cuentas por cobrar, anticipo),
++ * se timbra y el XML/PDF regresa a IventIA y al portal del expositor; el Contador sólo atiende excepciones.
++ */
++import { applySpec, readBoard, processSize, type Board, type CanvasSpec } from '../../src/services/labCanvas';
++import { wpId, type Workplan } from '../../../../packages/laboratorio/src/workplan';
++
++export const SLUG = 'expo-santa-fe';
++export const PROJECT = 'Integración IventIA ↔ SAE: facturación automática';
++export const TENANT = {
++  name: 'Expo Santa Fe',
++  mission: 'Operar Expo Santa Fe con IventIA: eventos, expositores, servicios, cobranza y facturación conectados con Aspel SAE.',
++  businessLines: ['Recintos y eventos', 'Servicios al expositor', 'Alimentos y bebidas'],
++  agentName: 'Nexo',
++  brandColor: '#0B3C5D',
++  accentColor: '#E07A1F',
++  collabSuite: 'GOOGLE_WORKSPACE',
++};
++export const FICHA = {
++  stage: 'DISENO',
++  tagline: 'Que la solicitud de factura de IventIA llegue sola a Aspel SAE, se registre, se timbre y regrese al expositor sin captura manual.',
++  problem: 'Hoy (HU-SA-08) Contabilidad recibe la solicitud en IventIA, vuelve a capturar cliente, conceptos e importes en SAE, timbra y sube a mano el XML y el PDF. Hay doble captura, errores de RFC/C.P., anticipos y notas de crédito sin liga, y cuentas por cobrar de SAE que no cuadran con los pagos de IventIA.',
++  audience: 'Contabilidad y finanzas, Servicios al expositor (coordinadores), Sistemas y los expositores en el portal.',
++  client: 'Expo Santa Fe',
++  venue: 'Expo Santa Fe, Ciudad de México',
++  timeframe: 'Diseño e integración: 1 de diciembre de 2026 al 14 de enero de 2027 (8 sesiones de 90 minutos); piloto con un evento en enero de 2027.',
++  description: 'Conector IventIA ↔ Aspel SAE: objetos espejo (cliente, evento → obra/proyecto, recurso → producto/servicio, lista de precios, organización → empresa/serie), factura pago primero (PUE), factura antes del pago (PPD) con complemento de pago, anticipos (CFDI relacionado 07), refacturación y notas de crédito, cuentas por cobrar, timbrado, regreso de XML/PDF a IventIA con aviso al expositor, y conciliación diaria con pólizas en COI.',
++  tags: ['Expo Santa Fe', 'IventIA', 'Aspel SAE', 'CFDI 4.0', 'Integración'],
++};
++
++// ── Roles (carriles)
++const R = {
++  exp: 'Expositor',
++  coord: 'Coordinador SA',
++  cont: 'Contador',
++  gcont: 'Gerente de Contabilidad',
++  iv: 'IventIA (sistema)',
++  con: 'Conector IventIA–SAE',
++  sae: 'Aspel SAE / PAC (sistema)',
++};
++const PORTAL = 'Portal del expositor › Mis solicitudes';
++const CONTA = 'IventIA › Contabilidad';
++
++type P = NonNullable<CanvasSpec['processes']>[number];
++const PROCESSES: P[] = [
++  {
++    name: 'Catálogos espejo · Sincronizar IventIA → SAE', trigger: 'REGISTRO',
++    goal: 'Que todo cliente, evento, recurso y precio que se factura en IventIA exista igual en SAE, con su clave SAE guardada en IventIA, antes de que se pida una factura.',
++    current: 'Contabilidad da de alta al cliente y los conceptos en SAE cuando llega la solicitud; las claves de SAE no viven en IventIA y los nombres no coinciden.',
++    future: 'Cada alta o cambio en IventIA deja un evento en la bitácora de integración; el conector lo crea o actualiza en SAE y guarda la clave SAE en el objeto de IventIA. Los errores quedan en una bandeja.',
++    roles: [R.iv, R.con, R.sae, R.cont],
++    stages: [{ name: 'Detectar', goal: 'Saber qué cambió' }, { name: 'Mapear', goal: 'Traducir al formato de SAE y validar' }, { name: 'Registrar en SAE' }, { name: 'Confirmar' }],
++    steps: [
++      { stage: 'Detectar', role: R.iv, name: 'Registra en la bitácora de integración el alta o cambio de cliente, evento, recurso o lista de precios', type: 'AUTOMATICO', deliverable: 'Evento de integración (outbox)', notes: 'Llave de idempotencia: objeto + id + versión (updatedAt).' },
++      { stage: 'Mapear', role: R.con, name: 'Toma el evento y busca su espejo en SAE por la llave de integración (RFC, código de recurso, código de evento)', type: 'AUTOMATICO', screen: 'Conector (servicio Windows junto al servidor de SAE)' },
++      { stage: 'Mapear', role: R.con, name: 'Valida obligatorios: RFC, régimen fiscal, C.P., uso CFDI, clave SAT de producto/servicio y de unidad', type: 'AUTOMATICO' },
++      { stage: 'Mapear', role: R.con, name: '¿Los datos están completos y son válidos?', type: 'DECISION', yesStep: 6, noStep: 5 },
++      { stage: 'Mapear', role: R.cont, name: 'Corrige el dato en el catálogo de IventIA o en la tabla de equivalencias SAT', type: 'TAREA', slaHours: 24, screen: 'IventIA › Bandeja de integración', notes: 'Al guardar, el cambio vuelve a la bitácora (paso 1).' },
++      { stage: 'Registrar en SAE', role: R.sae, name: 'Da de alta o actualiza el cliente, el producto/servicio o la obra/proyecto del evento', type: 'AUTOMATICO', deliverable: 'Clave SAE', notes: 'Tablas CLIE01 / INVE01 (+ campos libres CLIE_CLIB01). Lectura en Firebird; escritura por importación oficial o por el conector validado en una copia de la base (SAE no tiene API pública).' },
++      { stage: 'Confirmar', role: R.con, name: 'Guarda la clave SAE en el objeto de IventIA y lo marca Sincronizado', type: 'AUTOMATICO' },
++      { stage: 'Confirmar', role: R.iv, name: 'Avisa al Contador los errores de sincronización pendientes', type: 'AVISO', notifyRoles: [R.cont] },
++    ],
++  },
++  {
++    name: 'Facturar · Pago primero (PUE) automática', trigger: 'FORMULARIO',
++    goal: 'Que el expositor reciba su CFDI timbrado en el portal minutos después de pedirlo, sin que Contabilidad capture nada.',
++    current: 'HU-SA-08: el Contador abre la bandeja, valida RFC, genera el CFDI en SAE con los datos de la prefactura, timbra y adjunta a mano el XML y el PDF.',
++    future: 'La solicitud se valida sola, el conector crea el documento en SAE con las partidas de la orden y el pago, SAE timbra, y el XML/PDF regresan a IventIA y al portal. El Contador sólo ve excepciones.',
++    roles: [R.exp, R.iv, R.con, R.sae, R.cont],
++    stages: [{ name: 'Solicitar' }, { name: 'Validar' }, { name: 'Registrar en SAE' }, { name: 'Timbrar' }, { name: 'Entregar' }],
++    steps: [
++      { stage: 'Solicitar', role: R.exp, name: 'Pide la factura de su solicitud pagada y elige el cliente de facturación', type: 'CAPTURA', screen: PORTAL },
++      { stage: 'Solicitar', role: R.iv, name: 'Crea la solicitud de factura con la foto de datos fiscales y la prefactura', type: 'AUTOMATICO', deliverable: 'Solicitud de factura (INVOICE_AFTER_PAYMENT)' },
++      { stage: 'Validar', role: R.iv, name: 'Valida RFC, razón social, régimen y C.P. contra la constancia de situación fiscal', type: 'IA' },
++      { stage: 'Validar', role: R.iv, name: '¿Los datos fiscales son válidos?', type: 'DECISION', yesStep: 6, noStep: 5 },
++      { stage: 'Validar', role: R.exp, name: 'Corrige sus datos fiscales (la solicitud queda bloqueada)', type: 'TAREA', days: 1, screen: PORTAL, notes: 'Al corregir vuelve al paso 3.' },
++      { stage: 'Registrar en SAE', role: R.con, name: 'Asegura cliente, evento y recursos en SAE (catálogos espejo)', type: 'AUTOMATICO' },
++      { stage: 'Registrar en SAE', role: R.con, name: 'Crea la factura en SAE con las partidas de la orden, el evento y la serie de la organización', type: 'AUTOMATICO', deliverable: 'Factura SAE (serie-folio)', notes: 'Idempotente por número de solicitud: si ya existe el documento no se duplica.' },
++      { stage: 'Registrar en SAE', role: R.sae, name: 'Genera el cargo en cuentas por cobrar y aplica el pago registrado en IventIA', type: 'AUTOMATICO' },
++      { stage: 'Timbrar', role: R.sae, name: 'Timbra el CFDI 4.0 (PUE, forma de pago del cobro) con el PAC', type: 'AUTOMATICO', deliverable: 'XML timbrado y PDF', notes: 'Vía por decidir (sesión 2): A) el conector timbra con el PAC y registra UUID y XML en SAE (CFDI01, ESCFD = T); B) SAE timbra en lote los pendientes y el conector recoge el XML de CFDI01. SAE no documenta timbrado desatendido.' },
++      { stage: 'Timbrar', role: R.con, name: '¿Timbró sin error?', type: 'DECISION', yesStep: 12, noStep: 11 },
++      { stage: 'Timbrar', role: R.cont, name: 'Atiende el rechazo del PAC en la bandeja de excepciones y reintenta', type: 'TAREA', slaHours: 4, screen: CONTA, notes: 'Al reintentar vuelve al paso 9.' },
++      { stage: 'Entregar', role: R.con, name: 'Sube XML y PDF a IventIA; valida sello SAT y que el UUID no esté duplicado', type: 'AUTOMATICO' },
++      { stage: 'Entregar', role: R.iv, name: 'Marca la solicitud Facturada y la orden facturada', type: 'AUTOMATICO' },
++      { stage: 'Entregar', role: R.iv, name: 'Avisa al expositor (correo y portal) y al coordinador', type: 'AVISO', notifyRoles: [R.exp, R.coord] },
++      { stage: 'Entregar', role: R.exp, name: 'Descarga el XML y el PDF desde el portal', type: 'ENTREGABLE', deliverable: 'CFDI 4.0 (XML y PDF)', screen: PORTAL },
++    ],
++  },
++  {
++    name: 'Facturar · Antes del pago (PPD) y complemento de pago', trigger: 'FORMULARIO',
++    goal: 'Facturar a los clientes autorizados antes de que paguen y cerrar el ciclo fiscal con el complemento de pago cuando el dinero llega.',
++    current: 'La factura previa se autoriza por correo; el complemento de pago se emite a mano y a veces no se emite.',
++    future: 'El coordinador autoriza en IventIA (queda auditado), SAE emite la factura PPD con su cargo en cuentas por cobrar y, al registrarse el pago en IventIA, SAE emite y timbra el complemento de pago (REP).',
++    roles: [R.exp, R.coord, R.iv, R.con, R.sae],
++    stages: [{ name: 'Solicitar' }, { name: 'Autorizar' }, { name: 'Facturar' }, { name: 'Cobrar' }, { name: 'Complementar' }],
++    steps: [
++      { stage: 'Solicitar', role: R.exp, name: 'Pide factura antes de pagar (cliente habilitado en el evento)', type: 'CAPTURA', screen: PORTAL },
++      { stage: 'Autorizar', role: R.coord, name: 'Autoriza la factura previa al pago', type: 'AUTORIZACION', slaHours: 24, noStep: 0, screen: 'IventIA › Mi espacio', notes: 'Si rechaza termina y se avisa al expositor. La autorización queda auditada.' },
++      { stage: 'Facturar', role: R.con, name: 'Crea la factura PPD (forma de pago 99) en SAE con su cargo en cuentas por cobrar', type: 'AUTOMATICO' },
++      { stage: 'Facturar', role: R.sae, name: 'Timbra el CFDI y lo regresa a IventIA', type: 'AUTOMATICO', deliverable: 'CFDI PPD' },
++      { stage: 'Facturar', role: R.iv, name: 'Publica XML y PDF en el portal y avisa al expositor', type: 'AVISO', notifyRoles: [R.exp] },
++      { stage: 'Cobrar', role: R.exp, name: 'Paga en línea, por transferencia o en piso', type: 'TAREA', days: 5 },
++      { stage: 'Cobrar', role: R.coord, name: 'Registra o concilia el pago en IventIA', type: 'CAPTURA', slaHours: 24 },
++      { stage: 'Complementar', role: R.con, name: 'Registra el abono en cuentas por cobrar de SAE ligado a la factura', type: 'AUTOMATICO' },
++      { stage: 'Complementar', role: R.sae, name: 'Timbra el complemento de pago (REP 2.0)', type: 'AUTOMATICO', deliverable: 'Recibo electrónico de pago' },
++      { stage: 'Complementar', role: R.iv, name: 'Adjunta el REP a la solicitud y avisa al expositor', type: 'AVISO', notifyRoles: [R.exp, R.coord] },
++    ],
++  },
++  {
++    name: 'Anticipos · Stand y servicios', trigger: 'REGISTRO',
++    goal: 'Que el anticipo del expositor se facture y se aplique correctamente a la factura final, con el saldo igual en IventIA y en SAE.',
++    current: 'El anticipo se cobra en IventIA pero en SAE se factura aparte y se aplica a mano; los saldos no cuadran.',
++    future: 'Cada anticipo genera su CFDI de anticipo; la factura final relaciona el anticipo (tipo 07) y SAE salda la cuenta por cobrar con el egreso por aplicación del anticipo.',
++    roles: [R.coord, R.con, R.sae, R.iv, R.cont],
++    stages: [{ name: 'Cobrar anticipo' }, { name: 'Facturar anticipo' }, { name: 'Facturar total' }, { name: 'Aplicar anticipo' }],
++    steps: [
++      { stage: 'Cobrar anticipo', role: R.coord, name: 'Registra el anticipo del expositor en la orden', type: 'CAPTURA', screen: 'IventIA › Solicitudes' },
++      { stage: 'Facturar anticipo', role: R.con, name: 'Registra el anticipo en cuentas por cobrar de SAE y genera el CFDI de anticipo (serie FxANT, clave 84111506)', type: 'AUTOMATICO' },
++      { stage: 'Facturar anticipo', role: R.sae, name: 'Timbra el CFDI de anticipo y lo devuelve a IventIA', type: 'AUTOMATICO', deliverable: 'CFDI de anticipo' },
++      { stage: 'Facturar total', role: R.coord, name: 'Cierra la orden con el total del evento', type: 'TAREA', days: 1 },
++      { stage: 'Facturar total', role: R.con, name: 'Crea la factura por el total relacionando el anticipo (CFDI relacionado 07)', type: 'AUTOMATICO' },
++      { stage: 'Aplicar anticipo', role: R.sae, name: 'Emite el egreso por aplicación del anticipo (serie NCxANT, relación 07) y salda la cuenta por cobrar', type: 'AUTOMATICO', deliverable: 'CFDI de egreso por anticipo' },
++      { stage: 'Aplicar anticipo', role: R.iv, name: 'Muestra al expositor su estado de cuenta con el anticipo aplicado', type: 'AVISO', notifyRoles: [R.exp] },
++      { stage: 'Aplicar anticipo', role: R.cont, name: 'Revisa que el saldo de la orden y el de SAE coincidan', type: 'REVISION', slaHours: 48 },
++    ],
++  },
++  {
++    name: 'Ajustes · Refacturación, nota de crédito y reembolso', trigger: 'FORMULARIO',
++    goal: 'Atender cancelaciones, cambios de datos y reembolsos con el CFDI correcto y ligado a la factura original.',
++    current: 'Se pide por correo con carta; el Contador cancela y emite en SAE, y la nota de crédito no queda ligada a la solicitud en IventIA.',
++    future: 'El expositor lo pide en el portal con su carta, se autoriza en IventIA y el conector ejecuta en SAE la sustitución (motivo 01, relación 04) o la nota de crédito (relación 01 bonificación, 03 devolución) y actualiza cuentas por cobrar.',
++    roles: [R.exp, R.coord, R.cont, R.con, R.sae, R.iv],
++    stages: [{ name: 'Solicitar' }, { name: 'Autorizar' }, { name: 'Ejecutar en SAE' }, { name: 'Cerrar' }],
++    steps: [
++      { stage: 'Solicitar', role: R.exp, name: 'Pide cancelación, cambio de datos o reembolso y adjunta su carta', type: 'CAPTURA', screen: PORTAL },
++      { stage: 'Autorizar', role: R.coord, name: 'Revisa la carta, el motivo y el plazo (5 días antes del montaje)', type: 'REVISION', slaHours: 24 },
++      { stage: 'Autorizar', role: R.cont, name: 'Autoriza el ajuste; la nota de crédito no excede lo pagado', type: 'AUTORIZACION', slaHours: 48, noStep: 0 },
++      { stage: 'Ejecutar en SAE', role: R.con, name: 'Refacturación: cancela con motivo 01 y emite el CFDI sustituto (relación 04)', type: 'AUTOMATICO' },
++      { stage: 'Ejecutar en SAE', role: R.con, name: 'Nota de crédito: genera en SAE la devolución (relación 03) o la bonificación (relación 01) ligada a la factura', type: 'AUTOMATICO' },
++      { stage: 'Ejecutar en SAE', role: R.sae, name: 'Timbra y actualiza cuentas por cobrar', type: 'AUTOMATICO', deliverable: 'CFDI sustituto o nota de crédito' },
++      { stage: 'Cerrar', role: R.cont, name: 'Programa el reembolso (10 días hábiles) y adjunta el comprobante', type: 'ENTREGABLE', days: 2, deliverable: 'Comprobante de reembolso' },
++      { stage: 'Cerrar', role: R.iv, name: 'Liga el ajuste a la solicitud original y avisa al expositor y al coordinador', type: 'AVISO', notifyRoles: [R.exp, R.coord] },
++    ],
++  },
++  {
++    name: 'Cierre contable · Conciliación IventIA–SAE–COI', trigger: 'PROGRAMADO',
++    goal: 'Que cada día IventIA, SAE y la contabilidad (COI) digan lo mismo: facturado, cobrado, anticipos y saldos por evento.',
++    current: 'La conciliación es mensual y en Excel; las diferencias se descubren al cierre.',
++    future: 'Cada noche el conector compara IventIA contra SAE, la IA propone la causa de cada diferencia, el Contador la resuelve y SAE envía las pólizas a COI.',
++    roles: [R.con, R.iv, R.cont, R.sae, R.gcont],
++    stages: [{ name: 'Conciliar' }, { name: 'Contabilizar' }, { name: 'Reportar' }],
++    steps: [
++      { stage: 'Conciliar', role: R.con, name: 'Compara órdenes, pagos y facturas de IventIA contra SAE (folio, UUID, importe y saldo)', type: 'AUTOMATICO', deliverable: 'Reporte de diferencias' },
++      { stage: 'Conciliar', role: R.iv, name: 'Explica cada diferencia y propone la causa', type: 'IA' },
++      { stage: 'Conciliar', role: R.cont, name: 'Resuelve las diferencias del día', type: 'TAREA', slaHours: 24, screen: CONTA },
++      { stage: 'Contabilizar', role: R.sae, name: 'Genera las pólizas de ventas, cobranza y anticipos en COI (interfaz SAE–COI por rango de documentos)', type: 'AUTOMATICO', deliverable: 'Pólizas en COI' },
++      { stage: 'Contabilizar', role: R.gcont, name: 'Revisa y autoriza las pólizas del periodo', type: 'AUTORIZACION', slaHours: 72, noStep: 3 },
++      { stage: 'Reportar', role: R.iv, name: 'Publica el tablero de facturación por evento: facturado, cobrado, anticipos y pendientes', type: 'AUTOMATICO', deliverable: 'Tablero de facturación' },
++      { stage: 'Reportar', role: R.iv, name: 'Avisa el cierre del día a Contabilidad y Finanzas', type: 'AVISO', notifyRoles: [R.cont, R.gcont] },
++    ],
++  },
++];
++
++// Historia de usuario de cada proceso (modelo de IventIA › Mapas › Historias de usuario)
++const AUTH = ['Gerente de Contabilidad · Expo Santa Fe', 'Gerente de Administración y Finanzas · Expo Santa Fe', 'Gerente de Sistemas · Expo Santa Fe', 'Consumatum'];
++const STORIES: Record<string, { phase: string; phaseHint?: string; como: string; quiero: string; para: string; module: string; criteria: string[]; depends?: string[]; notes?: string[] }> = {
++  [PROCESSES[0].name]: {
++    phase: 'Preparar', phaseHint: 'Objetos espejo en SAE',
++    como: 'Contador', quiero: 'que clientes, eventos, recursos y precios de IventIA existan igual en SAE', para: 'no volver a capturar nada al facturar',
++    module: 'IventIA › Configuración › Integración SAE',
++    criteria: ['Toda alta o cambio deja un evento en la bitácora con llave de idempotencia', 'El objeto de IventIA guarda su clave SAE y la fecha de sincronización', 'Un error no detiene la cola: queda en la bandeja con el motivo', 'Reintentar no duplica clientes ni productos en SAE'],
++    notes: ['La llave del cliente es el RFC (+ id de IventIA para RFC genéricos XAXX010101000 / XEXX010101000)', 'Los recursos de IventIA se mapean a productos/servicios con clave SAT y unidad SAT'],
++  },
++  [PROCESSES[1].name]: {
++    phase: 'Facturar', phaseHint: 'CFDI de ingreso',
++    como: 'Expositor', quiero: 'pedir mi factura en el portal y recibirla timbrada sin esperar', para: 'cerrar mi trámite fiscal sin correos ni llamadas',
++    module: 'Portal del expositor · IventIA › Contabilidad',
++    criteria: ['Sólo se factura lo pagado (PUE) o lo autorizado (PPD)', 'Sólo se acepta XML con sello SAT y UUID no duplicado', 'Tiempo objetivo: menos de 10 minutos de la solicitud al CFDI en el portal', 'Toda falla del PAC llega a la bandeja de excepciones del Contador', 'El flujo es idéntico para SA, KIU y A&B (cambia la serie)'],
++    depends: [PROCESSES[0].name],
++  },
++  [PROCESSES[2].name]: {
++    phase: 'Facturar', phaseHint: 'CFDI de ingreso',
++    como: 'Coordinador SA', quiero: 'autorizar facturas antes del pago y que el complemento salga solo al cobrar', para: 'dar crédito a clientes confiables sin perder el control fiscal',
++    module: 'IventIA › Mi espacio · Contabilidad',
++    criteria: ['Toda factura sin pago sale con PPD y forma de pago 99', 'La autorización queda auditada con quién y cuándo', 'Cada pago registrado genera su REP ligado al UUID de la factura', 'El saldo insoluto en IventIA y SAE es el mismo'],
++    depends: [PROCESSES[0].name],
++  },
++  [PROCESSES[3].name]: {
++    phase: 'Cobrar', phaseHint: 'Anticipos y cuentas por cobrar',
++    como: 'Contador', quiero: 'que los anticipos se facturen y apliquen solos', para: 'que el saldo del expositor sea el mismo en IventIA, SAE y COI',
++    module: 'IventIA › Solicitudes · Contabilidad',
++    criteria: ['Cada anticipo tiene su CFDI de anticipo', 'La factura final relaciona el anticipo (tipo 07)', 'El egreso por aplicación salda la cuenta por cobrar', 'No se puede aplicar más anticipo que el cobrado'],
++    depends: [PROCESSES[1].name],
++  },
++  [PROCESSES[4].name]: {
++    phase: 'Ajustar', phaseHint: 'Cancelación, nota de crédito, reembolso',
++    como: 'Contador', quiero: 'ejecutar refacturaciones, notas de crédito y reembolsos desde IventIA', para: 'que cada ajuste quede ligado a la factura original y autorizado',
++    module: 'Portal del expositor · IventIA › Contabilidad',
++    criteria: ['La nota de crédito no excede lo pagado', 'La cancelación usa el motivo SAT correcto y relaciona el sustituto', 'Reembolso a 10 días hábiles de aprobado', 'Cancelación de lo pagado se pide 5 días antes del montaje'],
++    depends: [PROCESSES[1].name],
++  },
++  [PROCESSES[5].name]: {
++    phase: 'Cerrar', phaseHint: 'Conciliación y pólizas',
++    como: 'Gerente de Contabilidad', quiero: 'ver cada día lo facturado, cobrado y pendiente por evento conciliado contra SAE', para: 'cerrar el mes sin sorpresas',
++    module: 'IventIA › Contabilidad › Conciliación',
++    criteria: ['Conciliación diaria automática con reporte de diferencias', 'Cada diferencia tiene responsable y causa', 'Las pólizas llegan a COI por la interfaz SAE–COI', 'Tablero por evento: facturado, cobrado, anticipos, notas de crédito'],
++    depends: [PROCESSES[1].name, PROCESSES[3].name],
++  },
++};
++
++const VIEWS: Record<string, { name: string; roles: string[]; columns: string; filter?: string; groupBy?: string }[]> = {
++  [PROCESSES[0].name]: [{ name: 'Bandeja de integración', roles: [R.cont], columns: 'Objeto, Código, Acción, Estado, Error, Intentos, Fecha', filter: 'Estado = Error', groupBy: 'Objeto' }],
++  [PROCESSES[1].name]: [{ name: 'Solicitudes de factura', roles: [R.cont, R.coord], columns: 'Folio, Evento, Expositor, RFC, Total, Estado, Serie-folio SAE, UUID', groupBy: 'Evento' }, { name: 'Mis facturas', roles: [R.exp], columns: 'Solicitud, Fecha, Total, UUID, XML, PDF' }],
++  [PROCESSES[5].name]: [{ name: 'Diferencias del día', roles: [R.cont, R.gcont], columns: 'Evento, Documento, IventIA, SAE, Diferencia, Causa propuesta, Responsable', filter: 'Diferencia ≠ 0' }],
++};
++const REPORTS: Record<string, { name: string; metric: string; roles: string[]; frequency: 'DIARIO' | 'SEMANAL' | 'MENSUAL' | 'AL_TERMINAR'; chart?: 'KPI' | 'BARRAS' | 'LINEA' | 'TABLA' }[]> = {
++  [PROCESSES[1].name]: [{ name: 'Tiempo de solicitud a CFDI', metric: 'Minutos promedio de la solicitud al XML en el portal', roles: [R.cont, R.gcont], frequency: 'SEMANAL', chart: 'LINEA' }, { name: 'Facturas automáticas vs. manuales', metric: '% de solicitudes timbradas sin intervención', roles: [R.gcont], frequency: 'MENSUAL', chart: 'KPI' }],
++  [PROCESSES[5].name]: [{ name: 'Facturación por evento', metric: 'Facturado, cobrado, anticipos y notas de crédito por evento', roles: [R.gcont], frequency: 'DIARIO', chart: 'BARRAS' }],
++};
++
++// ── Lienzo: ecosistema, objetos espejo, decisiones y riesgos (piezas «esf_…», se rehacen cada vez)
++type Node = { key: string; nodeType: string; title: string; subtitle: string; status: 'EXISTE' | 'CONFIGURAR' | 'CONSTRUIR'; col: number; row: number };
++const NODES: Node[] = [
++  { key: 'exp', nodeType: 'person', title: 'Expositor', subtitle: 'Pide y descarga su factura', status: 'EXISTE', col: 0, row: 0 },
++  { key: 'portal', nodeType: 'web', title: 'Portal del expositor', subtitle: 'Solicitudes, facturas y avisos', status: 'EXISTE', col: 1, row: 0 },
++  { key: 'iv', nodeType: 'app', title: 'IventIA', subtitle: 'Eventos, órdenes, pagos y solicitudes de factura', status: 'EXISTE', col: 2, row: 0 },
++  { key: 'outbox', nodeType: 'db', title: 'Bitácora de integración', subtitle: 'Cola de eventos con idempotencia y reintentos', status: 'CONSTRUIR', col: 2, row: 1 },
++  { key: 'con', nodeType: 'api', title: 'Conector IventIA–SAE', subtitle: 'Servicio local junto al servidor de SAE (sale por HTTPS a IventIA)', status: 'CONSTRUIR', col: 3, row: 1 },
++  { key: 'sae', nodeType: 'app', title: 'Aspel SAE', subtitle: 'Clientes, productos, facturas, cuentas por cobrar', status: 'CONFIGURAR', col: 4, row: 0 },
++  { key: 'pac', nodeType: 'service', title: 'PAC / SAT', subtitle: 'Timbrado y cancelación de CFDI 4.0', status: 'EXISTE', col: 5, row: 0 },
++  { key: 'coi', nodeType: 'app', title: 'Aspel COI', subtitle: 'Pólizas por la interfaz SAE–COI', status: 'CONFIGURAR', col: 4, row: 1 },
++  { key: 'cont', nodeType: 'person', title: 'Contabilidad', subtitle: 'Atiende excepciones y concilia', status: 'EXISTE', col: 3, row: 0 },
++];
++const LINKS: [string, string, string, boolean?][] = [
++  ['exp', 'portal', 'pide factura'], ['portal', 'iv', 'solicitud'], ['iv', 'outbox', 'eventos'], ['outbox', 'con', 'toma y confirma'],
++  ['con', 'sae', 'lee Firebird · escribe por vía validada'], ['sae', 'pac', 'timbra'], ['sae', 'coi', 'pólizas'], ['con', 'iv', 'XML, PDF, claves SAE', true], ['cont', 'iv', 'excepciones', true],
++];
++const MIRRORS: [string, string][] = [
++  ['Organización (SA, KIU, A&B)', 'Empresa SAE o serie de facturación por organización. Decidir: una empresa con series o una empresa por razón social.'],
++  ['Cliente (personType, RFC, régimen, C.P., uso CFDI)', 'Cliente SAE (CLIE01): CLAVE, NOMBRE, RFC, régimen, C.P., uso CFDI. El id de IventIA va en un campo libre (CLIE_CLIB01). Llave: RFC + id.'],
++  ['Evento (código, fechas, recinto)', 'SAE no tiene proyectos nativos: campo libre del documento (FACTF_CLIB01) y observaciones + departamento o centro de costos en COI (por confirmar).'],
++  ['Recurso (code, unit, type, perDay)', 'Producto/servicio SAE (INVE01: CVE_ART, DESCR, clave SAT y unidad SAT, esquema de impuestos). Servicios sin existencias.'],
++  ['Lista de precios / pricingTier', 'Lista de precios SAE (precio 1…n) o el precio viaja en la partida (recomendado: IventIA manda el precio).'],
++  ['Orden + partidas (OrderLineItem)', 'Factura SAE: encabezado FACTF01 (CVE_DOC serie+folio, cliente, método y forma de pago, uso CFDI) y partidas PAR_FACTF01.'],
++  ['Pago (OrderPayment)', 'Cuentas por cobrar: cargo en CUEN_M01 y abono en CUEN_DET01 ligado a la factura (NO_FACTURA = CVE_DOC). En PPD, complemento de pago (tipo G).'],
++  ['Solicitud de factura (InvoiceRequest)', 'Documento SAE (CVE_DOC) + CFDI01 (UUID, XML_DOC, fecha de certificación); ESCFD indica pendiente o timbrado. Estado y bitácora en IventIA.'],
++  ['Orden nota de crédito (isCreditNote)', 'Devolución SAE (tipo D, relación 03) o bonificación (tipo E, relación 01) ligada a la factura original.'],
++  ['Proveedor y orden de compra (fase 2)', 'Proveedor SAE (PROV01) y cuentas por pagar (PAGA_M01 / PAGA_DET01) para servicios subcontratados.'],
++];
++const OPEN: [string, string, string][] = [
++  ['blanco', '❓', 'Versión de SAE (8, 9, 10 o Nube) y motor (Firebird o SQL Server). Pedir a Aspel/Siigo (o un distribuidor certificado) su postura sobre SDK o API: no hay API pública.'],
++  ['blanco', '❓', '¿Una empresa SAE con series por organización (SA, KIU, A&B) o una empresa por razón social?'],
++  ['blanco', '❓', 'El evento en SAE: ¿campo libre del documento, serie por evento o departamento en COI? SAE no tiene proyectos nativos.'],
++  ['blanco', '❓', 'Timbrado: A) el conector timbra con un PAC y deja UUID y XML en SAE, o B) SAE timbra en lote y el conector recoge el XML de CFDI01. ¿Qué PAC usan hoy?'],
++  ['rosa', '❗', 'Escribir directo en la base Firebird de SAE puede romper folios, saldos y soporte de Aspel: sólo con la vía oficial o validada.'],
++  ['rosa', '❗', 'El servidor de SAE está en la red local: el conector debe salir a IventIA (no abrir puertos hacia SAE).'],
++  ['rosa', '❗', 'Bloqueos de SAE cuando Contabilidad trabaja al mismo tiempo: cola con reintentos y horario de corte.'],
++  ['verde', '🎯', 'Meta: 90 % de las facturas timbradas sin intervención y conciliación diaria sin diferencias abiertas de más de 24 h.'],
++];
++
++const ASPEL = 'https://saeportaldeclientes.aspel.com.mx/wp-content/uploads/2023/06/';
++const REFS: [string, string][] = [
++  ['Abrir la base de datos de SAE 8.0 (S023)', `${ASPEL}S023_Abrir_bases_de_datos_Aspel_SAE_80.pdf`],
++  ['Importar de Excel a SAE (S021)', `${ASPEL}S021_Procedimiento-para-importar-informacion-de-Excel-a-Aspel-SAE.pdf`],
++  ['Aplicación de anticipo a la factura (S038)', `${ASPEL}S038_Aplicacion-de-anticipo-a-la-factura-de-la-operacion-en-Aspel-SAE-80V40.pdf`],
++  ['Nota de crédito en SAE 8.0 (S010)', `${ASPEL}S010_Elaboracion-de-una-Nota-de-credito-en-SAE-8.0V40.pdf`],
++  ['CFDI con timbrado de terceros (S048)', `${ASPEL}S048_Generacion-de-CFDI-con-servicio-de-timbrado-de-terceros-en-Aspel-SAE-80V40.pdf`],
++  ['Contabilidad electrónica SAE–COI (S003)', `${ASPEL}S003_Contabilidad-Electronica-con-Aspel-SAE-80.pdf`],
++];
++const W = 230, H = 120, GX = 70, GY = 80, PAD = 24, TOP = 58, NOTE_W = 260, NOTE_H = 150, GAP = 20;
++function topSection(x0: number, y0: number) {
++  const items: Board['items'] = [], connectors: Board['connectors'] = [];
++  // Ecosistema
++  const ecoW = PAD * 2 + 6 * W + 5 * GX, ecoH = TOP + 2 * H + GY + PAD;
++  items.push({ id: 'esf_f_eco', kind: 'frame', title: 'Ecosistema de la integración IventIA ↔ SAE', color: 'gris', x: x0, y: y0, w: ecoW, h: ecoH });
++  for (const n of NODES) items.push({ id: `esf_n_${n.key}`, kind: 'node', nodeType: n.nodeType, title: n.title, subtitle: n.subtitle, status: n.status, x: x0 + PAD + n.col * (W + GX), y: y0 + TOP + n.row * (H + GY), w: W, h: H });
++  LINKS.forEach(([a, b, label, dashed], i) => connectors.push({ id: `esf_c_${i}`, from: `esf_n_${a}`, to: `esf_n_${b}`, label, ...(dashed ? { dashed: true } : {}) }));
++  // Objetos espejo
++  const mx = x0 + ecoW + 80, cols = 5;
++  const rows = Math.ceil(MIRRORS.length / cols);
++  items.push({ id: 'esf_f_mirror', kind: 'frame', title: 'Objetos espejo: IventIA → Aspel SAE', color: 'gris', x: mx, y: y0, w: PAD * 2 + cols * NOTE_W + (cols - 1) * GAP, h: TOP + rows * (NOTE_H + GAP) - GAP + PAD });
++  MIRRORS.forEach(([iv, sae], i) => items.push({ id: `esf_m_${i}`, kind: 'note', color: i % 2 ? 'azul' : 'lila', text: `${iv}\n→ ${sae}`, x: mx + PAD + (i % cols) * (NOTE_W + GAP), y: y0 + TOP + Math.floor(i / cols) * (NOTE_H + GAP), w: NOTE_W, h: NOTE_H }));
++  // Decisiones abiertas, riesgos y meta
++  const oy = y0 + Math.max(ecoH, TOP + rows * (NOTE_H + GAP)) + 80;
++  items.push({ id: 'esf_f_open', kind: 'frame', title: 'Decisiones abiertas, riesgos y meta', color: 'gris', x: x0, y: oy, w: PAD * 2 + OPEN.length * NOTE_W + (OPEN.length - 1) * GAP, h: TOP + NOTE_H + PAD });
++  OPEN.forEach(([color, emoji, text], i) => items.push({ id: `esf_o_${i}`, kind: 'note', color, text, x: x0 + PAD + i * (NOTE_W + GAP), y: oy + TOP, w: NOTE_W, h: NOTE_H, stickers: [{ id: `esf_ok${i}`, emoji, label: emoji === '❗' ? 'Riesgo' : emoji === '❓' ? 'Duda' : 'Meta' }] }));
++  // Punto de partida: HU-SA-08
++  items.push({ id: 'esf_hu08', kind: 'note', color: 'amarillo', text: 'Punto de partida · IventIA HU-SA-08\nContabilidad: factura, nota de crédito y reembolso.\nHoy el Contador genera y timbra el CFDI en SAE y sube a mano XML y PDF. Esta integración lo automatiza y deja al Contador sólo las excepciones.', x: x0 + PAD + OPEN.length * (NOTE_W + GAP) + 40, y: oy + TOP, w: 320, h: NOTE_H + 10, stickers: [{ id: 'esf_hu08k', emoji: '📌', label: 'Fijo' }] });
++  // Referencias de Aspel (tutoriales oficiales del portal de clientes de SAE)
++  const ry = oy + TOP + NOTE_H + PAD + 80;
++  items.push({ id: 'esf_f_refs', kind: 'frame', title: 'Referencias de Aspel SAE', color: 'gris', x: x0, y: ry, w: PAD * 2 + REFS.length * 260 + (REFS.length - 1) * GAP, h: TOP + 130 + PAD });
++  REFS.forEach(([title, url], i) => items.push({ id: `esf_ref_${i}`, kind: 'ref', refType: 'link', title, url, x: x0 + PAD + i * (260 + GAP), y: ry + TOP, w: 260, h: 130 }));
++  return { items, connectors, height: ry + TOP + 130 + PAD - y0 };
++}
++
++/** Arma (o rehace) el lienzo del proyecto. `people` = personas de la organización (para compromisos). */
++export function buildCanvas(people: { name: string; email?: string; id?: string }[], raw?: unknown) {
++  const board: Board = readBoard(raw, PROJECT);
++  board.items = board.items.filter((i) => !i.id.startsWith('esf_'));
++  board.connectors = board.connectors.filter((c) => !c.id.startsWith('esf_'));
++  const rest = board.items;
++  const y0 = rest.length ? Math.min(...rest.map((i) => i.y)) - topSection(0, 0).height - 160 : 0;
++  const x0 = rest.length ? Math.min(...rest.map((i) => i.x)) : 0;
++  const top = topSection(x0, y0);
++  board.items.push(...top.items);
++  board.connectors.push(...top.connectors);
++
++  const { errors, done } = applySpec(board, { processes: PROCESSES }, people);
++  if (errors.length) throw new Error(`No se armó el lienzo:\n- ${errors.join('\n- ')}`);
++
++  // Historias, vistas y reportes; dependencias dibujadas entre procesos
++  const byName = (n: string) => Object.values(board.processes).find((p) => p.name === n)!;
++  const roleId = (n: string) => board.roles.find((r) => r.name === n)?.id;
++  const itemOf = (pid: string) => board.items.find((i) => i.kind === 'process' && i.processId === pid)!;
++  for (const sp of PROCESSES) {
++    const p = byName(sp.name) as Board['processes'][string] & { story?: unknown };
++    const s = STORIES[sp.name];
++    p.story = { phase: s.phase, phaseHint: s.phaseHint, como: s.como, quiero: s.quiero, para: s.para, module: s.module, org: 'Expo Santa Fe', criteria: s.criteria,
++      depends: (s.depends ?? []).map((n) => byName(n).id), authorizedBy: AUTH, notes: s.notes ?? [], doc: 'https://drive.google.com/file/d/14qFtupXkWm03CsUR6mYtzxxBH_gAPJ7L/view' };
++    p.startDate = '2027-01-11';
++    p.views = (VIEWS[sp.name] ?? []).map((v, i) => ({ id: `esf_v${i}_${p.id}`, name: v.name, roleIds: v.roles.map(roleId).filter(Boolean), columns: v.columns, ...(v.filter ? { filter: v.filter } : {}), ...(v.groupBy ? { groupBy: v.groupBy } : {}) }));
++    p.reports = (REPORTS[sp.name] ?? []).map((r, i) => ({ id: `esf_r${i}_${p.id}`, name: r.name, metric: r.metric, roleIds: r.roles.map(roleId).filter(Boolean), frequency: r.frequency, ...(r.chart ? { chart: r.chart } : {}) }));
++    for (const dep of s.depends ?? []) board.connectors.push({ id: `esf_d_${byName(dep).id}_${p.id}`, from: itemOf(byName(dep).id).id, to: itemOf(p.id).id, label: 'habilita', dashed: true });
++    Object.assign(itemOf(p.id), processSize(p));
++  }
++  return { board, done };
++}
++
++// ── Agenda de sesiones de integración (LabBoard.workplan)
++const S = (date: string, time: string, title: string, objective: string, questions: string, deliverable: string, participants: string, area: string) =>
++  ({ id: wpId('s'), date, time, duration: 90, title, objective, questions, deliverable, participants, area, owner: 'Consumatum', status: 'Programada' });
++export function buildWorkplan(by: string): Workplan {
++  return {
++    version: 1,
++    title: 'Agenda de integración IventIA ↔ Aspel SAE',
++    subtitle: 'Expo Santa Fe · 8 sesiones de 90 minutos, del 1 de diciembre de 2026 al 14 de enero de 2027',
++    source: `Preparada por ${by} en The Office`,
++    sessions: [
++      S('2026-12-01', '10:00', '1. Arranque: de HU-SA-08 a la factura automática', 'Acordar alcance, metas y responsables; recorrer cómo se factura hoy en SAE paso a paso.', '¿Qué versión de SAE y COI usan? ¿Cuántas empresas y series? ¿Quién timbra y con qué PAC? ¿Qué volumen de facturas por evento?', 'Alcance firmado, metas (90 % automático) y diagnóstico AS IS', 'Gerencia de Contabilidad, Administración y Finanzas, Sistemas, Servicios al expositor, Consumatum', 'Dirección y Contabilidad'),
++      S('2026-12-03', '10:00', '2. Arquitectura y vía de integración con SAE', 'Elegir la vía soportada (SDK/COM, servicio de Aspel o layouts) y dónde corre el conector.', '¿Dónde está el servidor de SAE? ¿Hay licencia del SDK? ¿Qué puertos y respaldos hay? ¿Se permite un servicio Windows que salga por HTTPS?', 'Decisión de arquitectura, diagrama de red y requisitos del servidor', 'Sistemas, Gerencia de Contabilidad, Consumatum (arquitectura)', 'Sistemas'),
++      S('2026-12-08', '10:00', '3. Objetos espejo y llaves', 'Mapear cliente, evento, recurso, lista de precios y organización a sus equivalentes en SAE, con llaves y claves SAT.', '¿Cómo se identifica a un cliente en SAE? ¿El evento es obra, campo libre o centro de costos? ¿Catálogo de productos SAE vs. recursos IventIA?', 'Matriz de equivalencias IventIA ↔ SAE y tabla de claves SAT', 'Contabilidad, Servicios al expositor, Consumatum', 'Contabilidad'),
++      S('2026-12-10', '10:00', '4. Factura pago primero y factura antes del pago', 'Validar el flujo PUE automático y el PPD con complemento de pago.', '¿Qué serie usa cada organización? ¿Cuándo se emite el REP? ¿Quién autoriza la factura previa?', 'Procesos «Facturar» validados y casos de prueba', 'Contabilidad, Servicios al expositor, Consumatum', 'Contabilidad'),
++      S('2026-12-15', '10:00', '5. Anticipos, notas de crédito, refacturación y reembolsos', 'Definir cómo se registran en SAE los anticipos y los ajustes y cómo se ligan a la factura original.', '¿Cómo factura hoy los anticipos? ¿Usa devoluciones o notas de crédito? ¿Quién autoriza cada ajuste?', 'Procesos «Anticipos» y «Ajustes» validados', 'Contabilidad, Administración y Finanzas, Consumatum', 'Contabilidad'),
++      S('2026-12-17', '10:00', '6. Cuentas por cobrar, conciliación y pólizas en COI', 'Acordar la conciliación diaria IventIA–SAE y la interfaz SAE–COI.', '¿Qué conceptos de cuentas por cobrar usan? ¿Cómo se generan hoy las pólizas? ¿Qué reporte de cierre necesitan?', 'Reglas de conciliación, conceptos CxC y póliza modelo', 'Gerencia de Contabilidad, Administración y Finanzas, Consumatum', 'Finanzas'),
++      S('2027-01-12', '10:00', '7. Experiencia del expositor y bandeja de excepciones', 'Revisar avisos del portal, correos, bandeja de excepciones y reportes.', '¿Qué ve el expositor y cuándo? ¿Qué excepciones atiende el Contador y con qué SLA?', 'Pantallas y avisos aprobados', 'Servicios al expositor, Contabilidad, Consumatum (UX)', 'Servicios al expositor'),
++      S('2027-01-14', '10:00', '8. Pruebas, piloto y salida', 'Probar en una empresa de pruebas de SAE, elegir el evento piloto y el plan de salida.', '¿Hay empresa de pruebas en SAE? ¿Qué evento es el piloto? ¿Cómo se regresa al proceso manual si algo falla?', 'Plan de pruebas, evento piloto y criterios de salida', 'Todos', 'Dirección'),
++    ],
++    roles: [
++      { id: wpId('r'), area: 'Gerencia de Contabilidad', responsibility: 'Dueña del proceso; valida reglas fiscales, series, anticipos, notas de crédito y pólizas', input: 'Facturas, anticipos y notas de crédito de ejemplo; póliza modelo', when: 'Sesiones 1, 3–6' },
++      { id: wpId('r'), area: 'Administración y Finanzas', responsibility: 'Autoriza reglas de crédito (PPD), reembolsos y conciliación', input: 'Políticas de crédito y reembolso', when: 'Sesiones 4–6' },
++      { id: wpId('r'), area: 'Sistemas', responsibility: 'Servidor de SAE, red, licencias, respaldos y el servicio del conector', input: 'Versión de SAE/COI, inventario del servidor, licencia del SDK', when: 'Sesiones 2 y 8' },
++      { id: wpId('r'), area: 'Servicios al expositor', responsibility: 'Flujo del expositor en el portal y autorizaciones de factura previa', input: 'Casos frecuentes y quejas de facturación', when: 'Sesiones 4 y 7' },
++      { id: wpId('r'), area: 'Consumatum', responsibility: 'Diseño, construcción del conector, cambios en IventIA, pruebas y acompañamiento', input: 'Lienzo, historias de usuario y plan de pruebas', when: 'Todas' },
++    ],
++    inputs: [
++      { id: wpId('i'), name: 'Versión y licencias de Aspel SAE y COI', detail: 'Versión exacta, número de usuarios, SDK/COM disponible', owner: 'Sistemas', due: '2026-12-03', status: 'Pendiente' },
++      { id: wpId('i'), name: 'Acceso al servidor de SAE (o a una copia de la empresa)', detail: 'Para leer la estructura y probar en una empresa de pruebas', owner: 'Sistemas', due: '2026-12-08', status: 'Pendiente' },
++      { id: wpId('i'), name: 'Catálogo de clientes y productos/servicios de SAE', detail: 'Exportación a Excel para cruzar con IventIA', owner: 'Contabilidad', due: '2026-12-08', status: 'Pendiente' },
++      { id: wpId('i'), name: 'Series y folios por organización', detail: 'SA, KIU, A&B; ingreso, anticipo, nota de crédito, REP', owner: 'Contabilidad', due: '2026-12-10', status: 'Pendiente' },
++      { id: wpId('i'), name: 'XML de ejemplo', detail: 'Factura PUE, PPD, REP, anticipo, aplicación de anticipo, nota de crédito, sustitución', owner: 'Contabilidad', due: '2026-12-10', status: 'Pendiente' },
++      { id: wpId('i'), name: 'Conceptos de cuentas por cobrar y póliza modelo de COI', owner: 'Gerencia de Contabilidad', due: '2026-12-17', status: 'Pendiente' },
++      { id: wpId('i'), name: 'Evento piloto (enero 2027)', owner: 'Servicios al expositor', due: '2027-01-14', status: 'Pendiente' },
++    ],
++  };
++}
+diff --git a/apps/api/scripts/expo-santa-fe-organizacion.ts b/apps/api/scripts/expo-santa-fe-organizacion.ts
+new file mode 100644
+index 0000000..acca129
+--- /dev/null
++++ b/apps/api/scripts/expo-santa-fe-organizacion.ts
+@@ -0,0 +1,96 @@
++/**
++ * Organización Expo Santa Fe en The Office (implementación de IventIA):
++ * 1. Crea la organización «Expo Santa Fe» (slug expo-santa-fe) con sus roles.
++ * 2. Da de alta a quien la crea (LAB_EMAIL) como administrador, ligado a su cuenta (cambia de organización sin volver a entrar).
++ * 3. Crea en el Laboratorio el proyecto «Integración IventIA ↔ SAE: facturación automática» con su ficha, el lienzo
++ *    (ecosistema, objetos espejo, procesos con historia de usuario, decisiones abiertas y riesgos) y la agenda de
++ *    sesiones de integración (LabBoard.workplan). Los datos viven en scripts/data/expo-santa-fe.ts.
++ * Idempotente: lo que ya existe no se duplica; los procesos con el mismo nombre se rehacen en su lugar; la agenda sólo
++ * se pone si el proyecto no tiene (FORCE=1 la reemplaza).
++ *
++ * Uso: DATABASE_URL=… LAB_EMAIL=correo@… [FORCE=1] npx tsx scripts/expo-santa-fe-organizacion.ts
++ *      DRY_RUN=1 npx tsx scripts/expo-santa-fe-organizacion.ts   → sólo arma el lienzo y escribe expo-santa-fe.lab.json (sin base)
++ */
++import fs from 'node:fs';
++import path from 'node:path';
++import { buildCanvas, buildWorkplan, PROJECT, SLUG, TENANT, FICHA } from './data/expo-santa-fe';
++
++async function dryRun() {
++  const { board, done } = buildCanvas([]);
++  const out = path.join(process.cwd(), 'expo-santa-fe.lab.json');
++  fs.writeFileSync(out, JSON.stringify(board, null, 2));
++  const wp = buildWorkplan('Consumatum');
++  console.log(`Lienzo: ${done.join('; ')}.`);
++  console.log(`Agenda: ${wp.sessions.length} sesiones, ${wp.roles.length} responsabilidades, ${wp.inputs.length} insumos.`);
++  console.log(`Escribí ${out}`);
++}
++
++async function main() {
++  const { prisma, Prisma } = await import('@theoffice/db');
++  const { nextCode } = await import('../src/services/codes');
++  const { logActivity } = await import('../src/services/activity');
++  const { summarize } = await import('../src/services/labProject');
++  const { accountOf } = await import('../src/services/orgs');
++  const { orgPeople } = await import('../src/services/labCanvas');
++  try {
++    const email = (process.env.LAB_EMAIL ?? '').trim().toLowerCase();
++    if (!email) throw new Error('Falta LAB_EMAIL.');
++    const col = await prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*)::bigint AS n FROM information_schema.columns WHERE table_name = 'LabBoard' AND column_name = 'workplan'`;
++    if (!Number(col[0]?.n)) throw new Error('La base todavía no tiene la columna LabBoard.workplan: espera el deploy del API.');
++
++    // 1. Organización y roles
++    let tenant = await prisma.tenant.findUnique({ where: { slug: SLUG } });
++    if (!tenant) {
++      tenant = await prisma.tenant.create({ data: { slug: SLUG, ...TENANT } });
++      console.log(`Organización creada: ${tenant.name} (${SLUG}).`);
++    } else console.log(`Organización ya existía: ${tenant.name}.`);
++    const tid = tenant.id;
++    const role = async (name: string, data: Partial<import('@theoffice/db').Prisma.RoleUncheckedCreateInput>) =>
++      prisma.role.upsert({ where: { tenantId_name: { tenantId: tid, name } }, update: {}, create: { tenantId: tid, name, ...data } });
++    const admin = await role('Administrador', { description: 'Acceso total', isAdmin: true, modules: ['A', 'B', 'C', 'D', 'E', 'CONFIG'] });
++    await role('Contabilidad y finanzas', { description: 'Colabora en el proyecto de integración IventIA ↔ SAE (agenda, minutas, diagramas y comentarios)', modules: ['E'], canApprove: ['Facturas', 'Notas de crédito', 'Pólizas'] });
++    await role('Sistemas', { description: 'Infraestructura del servidor de SAE, red, respaldos y accesos del conector', modules: ['CONFIG'] });
++    await role('Servicios al expositor', { description: 'Coordinación de solicitudes, pagos y autorizaciones de factura previa', modules: ['B'], canApprove: ['Factura antes del pago'] });
++
++    // 2. Quien crea: administrador, misma cuenta
++    const sources = await prisma.user.findMany({ where: { email, active: true, NOT: { tenantId: tid } }, orderBy: { createdAt: 'asc' } });
++    let me = await prisma.user.findUnique({ where: { tenantId_email: { tenantId: tid, email } } });
++    if (!me) {
++      if (!sources.length) throw new Error(`No hay un usuario activo con ${email} en otra organización.`);
++      const src = sources[0];
++      const acc = accountOf(src);
++      await prisma.user.updateMany({ where: { id: { in: sources.map((s) => s.id) }, accountId: null }, data: { accountId: acc } });
++      me = await prisma.user.create({ data: { tenantId: tid, email, name: src.name, title: src.title, accountId: acc, roleId: admin.id, channel: src.channel, passwordHash: src.passwordHash, googleSub: null, preferences: src.preferences ?? undefined } });
++      console.log(`${me.name} quedó como administrador de Expo Santa Fe (misma cuenta).`);
++    } else console.log(`${me.name} ya estaba en Expo Santa Fe.`);
++
++    // 3. Proyecto del Laboratorio
++    let board = await prisma.labBoard.findFirst({ where: { tenantId: tid, name: PROJECT, archived: false } });
++    if (!board) {
++      const code = await nextCode(tid, 'LAB', 3);
++      board = await prisma.labBoard.create({
++        data: {
++          tenantId: tid, code, name: PROJECT, shared: true, createdById: me.id, updatedById: me.id, ...FICHA,
++          data: { version: 1, name: PROJECT, items: [], connectors: [], roles: [], processes: {}, meetings: [], commitments: [] } as import('@theoffice/db').Prisma.InputJsonValue,
++          summary: { processes: 0, steps: 0, roles: 0, items: 0, refs: 0, published: 0 } as import('@theoffice/db').Prisma.InputJsonValue,
++        },
++      });
++      await logActivity(tid, { type: 'USER', id: me.id, name: me.name }, 'CONFIG', board.id, 'LAB_CREATED', `Creó el proyecto ${code} «${PROJECT}» en el Laboratorio`);
++      console.log(`Proyecto creado: ${code}.`);
++    } else console.log(`El proyecto ya existía (${board.code}).`);
++
++    const { board: canvas, done } = buildCanvas(await orgPeople(tid), board.data);
++    const { camera: _c, ...data } = canvas;
++    const wpData = !board.workplan || process.env.FORCE === '1' ? { workplan: buildWorkplan(me.name) as unknown as import('@theoffice/db').Prisma.InputJsonValue } : {};
++    await prisma.labBoard.update({ where: { id: board.id }, data: { data: data as unknown as import('@theoffice/db').Prisma.InputJsonValue, summary: summarize(data) as import('@theoffice/db').Prisma.InputJsonValue, updatedById: me.id, ...wpData } });
++    await prisma.comment.create({ data: { tenantId: tid, subjectType: 'LAB', subjectId: board.id, authorId: me.id, body: `Diagramó el ciclo de integración IventIA ↔ SAE: ${done.join('; ')}${'workplan' in wpData ? '; y la agenda de sesiones de integración' : ''}.` } });
++    console.log(`Lienzo: ${done.join('; ')}.`);
++    if ('workplan' in wpData) console.log('Agenda de sesiones puesta.'); else console.log('La agenda ya existía; no se tocó (FORCE=1 para reemplazarla).');
++    console.log(`Listo: /laboratorio/${board.id} en ${tenant.name}.`);
++    void Prisma;
++  } finally {
++    await prisma.$disconnect();
++  }
++}
++
++(process.env.DRY_RUN === '1' ? dryRun() : main()).catch((e) => { console.error((e as Error).message); process.exit(1); });
+-- 
+2.43.0
+
