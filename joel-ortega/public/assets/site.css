@@ -553,3 +553,8 @@ a.btn{cursor:pointer}
 .temporal small{flex-basis:100%}
 .temporal code{font:700 22px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em}
 .barra--sobre .barra__top{color:#fff}
+/* Portadas reales */
+.portada-real{display:block;width:100%;height:auto;box-shadow:10px 10px 0 var(--negro);transition:transform .4s var(--ease);background:#fff;align-self:start}
+.obra:hover .portada-real{transform:translate(-4px,-6px) rotate(-1deg)}
+.fila-libro .portada-real{box-shadow:6px 6px 0 var(--negro)}
+@media (max-width:640px){.obra .portada-real{max-width:180px}}

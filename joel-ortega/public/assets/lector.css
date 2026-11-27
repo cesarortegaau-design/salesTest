@@ -99,3 +99,8 @@ body.tema-noche .lt-cargando{color:#aaa}
   .lt-der{gap:0}
   .lt-btn{width:34px;height:34px;font-size:18px}
 }
+.lt-fin{background:var(--barra);color:#fff;max-width:min(720px,calc(100% - 24px));margin:10px auto 0;padding:clamp(30px,6vw,56px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.lt-fin small{font:700 12px/1 var(--cond);letter-spacing:.24em;text-transform:uppercase;color:var(--rojo-300)}
+.lt-fin h2{font:800 clamp(32px,5vw,48px)/1 var(--cond);text-transform:uppercase;margin:0}
+.lt-fin p{margin:0 0 10px;max-width:46ch;color:#d8d2cc}
+.lt-fin .lt-descargar{margin:0;font-size:16px;padding:15px 24px}

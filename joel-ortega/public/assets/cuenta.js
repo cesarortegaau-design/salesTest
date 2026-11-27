@@ -52,7 +52,10 @@
     if (preferido && libros[preferido]) ids.sort(function (x, y) { return (y === preferido) - (x === preferido); });
     document.getElementById('lista-libros').innerHTML = ids.map(function (id) {
       var L = libros[id], s = sols[id], e = s ? ESTADOS[s.estado] || ESTADOS.solicitada : null;
-      var cab = '<div class="fila-libro"><div class="portada ' + (PORTADAS[id] || 'p1') + '" aria-hidden="true"><span class="t">' + esc(L.titulo) + '</span><span class="a">J. Ortega</span></div><div>' +
+      var portada = id === 'adios-al-68'
+        ? '<img class="portada-real" src="/media/portadas/adios-al-68.webp" alt="">'
+        : '<div class="portada ' + (PORTADAS[id] || 'p1') + '" aria-hidden="true"><span class="t">' + esc(L.titulo) + '</span><span class="a">J. Ortega</span></div>';
+      var cab = '<div class="fila-libro">' + portada + '<div>' +
         (L.nuevo ? '<span class="chip" style="background:var(--rojo);color:#fff">Nuevo</span> ' : '') +
         (s ? '<span class="chip chip--' + esc(s.estado) + '">' + esc(e[0]) + '</span>' : '') +
         '<h3 style="margin-top:10px">' + esc(L.titulo) + '</h3><p style="margin:0 0 8px">' + esc(DESCR[id] || '') + '</p>';

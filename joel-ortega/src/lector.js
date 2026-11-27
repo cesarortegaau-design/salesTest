@@ -5,7 +5,9 @@ pdfjs.GlobalWorkerOptions.workerSrc = '/assets/pdf.worker.min.js';
 
 const $ = (id) => document.getElementById(id);
 const libro = new URLSearchParams(location.search).get('libro') || '';
-const CLAVE = `lector:${libro}`;
+const MUESTRAS = { semblanzas: { titulo: 'Semblanzas tras bambalinas', url: '/muestras/semblanzas.pdf' } };
+const muestra = new URLSearchParams(location.search).has('muestra') ? MUESTRAS[libro] : null;
+const CLAVE = `lector:${muestra ? 'muestra:' : ''}${libro}`;
 const lee = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const guarda = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -237,14 +239,23 @@ async function inicia() {
   if (!libro) return mensaje('No se indicó qué libro abrir.', true);
   $('lt-descargar').href = `/api/descarga?libro=${encodeURIComponent(libro)}`;
   let info;
-  try { info = await datosLibro(); } catch { info = {}; }
+  if (muestra) {
+    // Muestra gratuita: sin cuenta; el botón lleva a pedir el libro completo.
+    info = { titulo: muestra.titulo + ' · Muestra' };
+    $('lt-descargar').href = `/pedir.html?libro=${encodeURIComponent(libro)}`;
+    $('lt-descargar').textContent = 'Pedir el libro';
+    document.querySelector('.lt-volver').href = '/#nuevo-libro';
+    document.querySelector('.lt-volver').title = 'Volver';
+  } else {
+    try { info = await datosLibro(); } catch { info = {}; }
+  }
   if (info.sinSesion) return mensaje('Inicia sesión para leer tus libros. <a href="/cuenta.html">Ir a mi cuenta</a>', true, true);
   const titulo = info.titulo || 'Libro';
   document.title = `${titulo} · Lector`;
   $('lt-titulo').textContent = titulo;
   dedicatoria(titulo, info.sol);
 
-  const tarea = pdfjs.getDocument({ url: `/api/descarga?libro=${encodeURIComponent(libro)}&modo=leer`, withCredentials: true, disableRange: true, isEvalSupported: false });
+  const tarea = pdfjs.getDocument({ url: muestra ? muestra.url : `/api/descarga?libro=${encodeURIComponent(libro)}&modo=leer`, withCredentials: true, disableRange: true, isEvalSupported: false });
   tarea.onProgress = ({ loaded, total }) => {
     const pct = total ? Math.min(100, (loaded / total) * 100) : 0;
     $('lt-progreso').style.width = pct + '%';
@@ -270,6 +281,12 @@ async function inicia() {
   if (estado.zoom) { modoAncho = false; escala = estado.zoom; }
   maqueta();
   indice();
+  if (muestra) {
+    const fin = document.createElement('section');
+    fin.className = 'lt-fin';
+    fin.innerHTML = `<small>Fin de la muestra</small><h2>Sigue leyendo</h2><p>Leíste el preámbulo y la primera semblanza. El libro completo reúne cerca de cincuenta más, y Joel te lo comparte dedicado y firmado.</p><a class="lt-descargar" href="/pedir.html?libro=${encodeURIComponent(libro)}">Pedir el libro</a>`;
+    cont.appendChild(fin);
+  }
   const inicio = Math.min(estado.pagina || 1, pdf.numPages);
   if (inicio > 1) ir(inicio); else alDesplazar();
 }
