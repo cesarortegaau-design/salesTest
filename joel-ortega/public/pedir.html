@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pedir el libro · Joel Ortega Juárez</title>
+<meta name="theme-color" content="#c8102e">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;0,900;1,800;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<header class="barra">
+  <nav class="barra__nav wrap" aria-label="Principal">
+    <a href="/" class="marca"><b>JOEL ORTEGA</b><span>JUÁREZ</span></a>
+    <ul>
+      <li class="sec"><a href="/#libros">Libros</a></li>
+      <li class="sec"><a href="/cuenta.html">Mi cuenta</a></li>
+      <li data-sesion></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="cab-pagina">
+  <div class="wrap">
+    <p class="kicker kicker--claro">Pedir el libro</p>
+    <h1 class="titulo titulo--l titulo--claro">Pide <span class="resalta">tu libro</span></h1>
+    <p>Elige el libro, coopera si puedes y envía tu comprobante. Joel valida tu solicitud y te lo comparte dedicado.</p>
+  </div>
+</section>
+
+<main class="cuerpo-pagina">
+  <div class="wrap pedir">
+    <form id="form-pedir" class="pedir__form" novalidate>
+      <section class="tarjeta paso">
+        <h2><span class="paso__n">1</span>El libro</h2>
+        <div class="opciones" id="pd-libros" role="radiogroup" aria-label="Libro"></div>
+      </section>
+
+      <section class="tarjeta paso">
+        <h2><span class="paso__n">2</span>Tu cuenta</h2>
+        <div id="pd-con-sesion" hidden><p style="margin:0">Sesión iniciada como <b id="pd-correo-sesion"></b>. <button type="button" class="enlace" data-salir style="background:none;border:0;padding:0;cursor:pointer;font:inherit">Usar otra cuenta</button></p></div>
+        <div id="pd-sin-sesion" class="rejilla-2" style="gap:12px" hidden>
+          <div><label for="pd-correo">Correo electrónico</label><input id="pd-correo" type="email" autocomplete="email" required></div>
+          <div><label for="pd-pass">Contraseña</label><div class="pass-wrap"><input id="pd-pass" type="password" minlength="8" autocomplete="current-password" required><button type="button" class="pass-ojo" id="pd-ojo" aria-pressed="false">Ver</button></div></div>
+          <div><label for="pd-nombre">Tu nombre (para la dedicatoria)</label><input id="pd-nombre" autocomplete="name" maxlength="120"></div>
+          <p class="ayuda" style="align-self:end;margin:0 0 6px">Si ya tienes cuenta, usa tu correo y contraseña. Si no, se crea con estos datos (mínimo 8 caracteres).</p>
+        </div>
+      </section>
+
+      <section class="tarjeta paso">
+        <h2><span class="paso__n">3</span>Tu cooperación</h2>
+        <p id="pd-nota" style="margin:0 0 10px"></p>
+        <dl class="datos-banco datos-banco--claro" id="pd-datos"></dl>
+        <div class="rejilla-2" style="gap:12px">
+          <div><label for="pd-monto">Cooperación (MXN)</label><input id="pd-monto" inputmode="decimal"></div>
+          <div><label for="pd-ref">Referencia o folio (opcional)</label><input id="pd-ref"></div>
+        </div>
+        <div style="margin-top:12px"><label for="pd-archivo">Comprobante de transferencia</label><input id="pd-archivo" type="file" accept="image/*,application/pdf"><p class="ayuda">Foto o PDF, máximo 4 MB. Si no puedes cooperar, déjalo vacío y cuéntale a Joel en el mensaje.</p></div>
+        <div style="margin-top:12px"><label for="pd-msg">Mensaje para Joel (opcional)</label><textarea id="pd-msg" maxlength="600" style="min-height:80px"></textarea></div>
+      </section>
+
+      <div class="pedir__enviar">
+        <button class="btn btn--rojo" type="submit" id="pd-enviar">Enviar mi solicitud</button>
+        <p class="estado" role="status" id="pd-estado"></p>
+      </div>
+    </form>
+
+    <section class="tarjeta" id="pd-listo" hidden>
+      <p class="kicker">Solicitud enviada</p>
+      <h2 id="pd-listo-titulo">¡Listo!</h2>
+      <p id="pd-listo-texto"></p>
+      <p><a class="btn btn--rojo" href="/cuenta.html">Ver mi cuenta</a> <a class="btn btn--linea" href="/">Volver al inicio</a></p>
+    </section>
+  </div>
+</main>
+<script src="/assets/sesion.js"></script>
+<script src="/assets/pedir.js"></script>
+</body>
+</html>

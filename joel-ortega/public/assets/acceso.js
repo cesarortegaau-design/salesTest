@@ -19,6 +19,7 @@
     modo = m;
     modal.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === m)); });
     modal.querySelectorAll('[data-solo="registro"]').forEach(function (el) { el.hidden = m !== 'registro'; });
+    modal.querySelectorAll('[data-solo="entrar"]').forEach(function (el) { el.hidden = m !== 'entrar'; });
     enviar.textContent = m === 'registro' ? 'Crear cuenta' : 'Entrar';
     pass.setAttribute('autocomplete', m === 'registro' ? 'new-password' : 'current-password');
     estado.textContent = '';
@@ -62,6 +63,11 @@
   envoltura.parentNode.insertBefore(mayus, envoltura.nextSibling);
   pass.addEventListener('keyup', function (e) { if (e.getModifierState) mayus.hidden = !e.getModifierState('CapsLock'); });
   pass.addEventListener('input', function () { if (estado.className === 'estado') estado.textContent = ''; });
+
+  var olvido = document.createElement('p');
+  olvido.className = 'ayuda'; olvido.setAttribute('data-solo', 'entrar');
+  olvido.textContent = '¿Olvidaste tu contraseña? Pídele a Joel una contraseña temporal y cámbiala después en Mi perfil.';
+  form.appendChild(olvido);
 
   function sesionActiva() { return !!(window.sesionJO && window.sesionJO.estado.usuario); }
   function irA() { return libro ? '/cuenta.html?libro=' + encodeURIComponent(libro) : '/cuenta.html'; }

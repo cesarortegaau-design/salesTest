@@ -280,6 +280,20 @@ $('form-archivo').addEventListener('submit', async (e) => {
   finally { btn.disabled = false; }
 });
 
+$('form-temporal').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const st = $('t-estado');
+  if (!confirm('Se reemplazará la contraseña actual de ' + $('t-correo').value + '. ¿Continuar?')) return;
+  st.className = 'estado'; st.textContent = 'Generando…';
+  $('t-resultado').hidden = true;
+  try {
+    const d = await api('/api/admin?accion=clave-temporal', { method: 'POST', body: JSON.stringify({ correo: $('t-correo').value }) });
+    $('t-para').textContent = d.correo; $('t-clave').textContent = d.temporal; $('t-resultado').hidden = false;
+    st.className = 'estado ok'; st.textContent = 'Lista. Compártela con la persona; no se volverá a mostrar.';
+  } catch (err) { st.textContent = err.message; }
+});
+$('t-copiar').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('t-clave').textContent); $('t-copiar').textContent = 'Copiada'; } catch {} });
+
 $('form-ajustes').addEventListener('submit', async (e) => {
   e.preventDefault();
   const st = $('j-estado');

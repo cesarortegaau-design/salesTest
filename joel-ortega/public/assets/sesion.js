@@ -69,5 +69,31 @@
     setTimeout(function () { t.classList.add('fuera'); }, 2600);
     setTimeout(function () { t.remove(); }, 3200);
   };
+  // Menú para celular: se arma con los enlaces de la barra.
+  var nav = document.querySelector('.barra__nav');
+  var ligas = nav ? [].slice.call(nav.querySelectorAll('ul li.sec a')) : [];
+  if (nav && ligas.length) {
+    var barra = nav.closest('.barra');
+    var boton = document.createElement('button');
+    boton.type = 'button'; boton.className = 'barra__menu';
+    boton.setAttribute('aria-label', 'Menú'); boton.setAttribute('aria-expanded', 'false');
+    boton.innerHTML = '<i></i><i></i><i></i>';
+    nav.appendChild(boton);
+    var panel = document.createElement('div');
+    panel.className = 'menu-movil'; panel.hidden = true;
+    ligas.forEach(function (a) { var c = a.cloneNode(true); c.removeAttribute('id'); if (a.hidden) c.hidden = true; panel.appendChild(c); });
+    barra.appendChild(panel);
+    var abre = function (v) { panel.hidden = !v; boton.setAttribute('aria-expanded', String(v)); barra.classList.toggle('barra--abierta', v); };
+    boton.addEventListener('click', function () { abre(panel.hidden); });
+    panel.addEventListener('click', function (e) { if (e.target.closest('a')) abre(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) { abre(false); boton.focus(); } });
+    document.addEventListener('sesion', function () { panel.querySelectorAll('a[href="#perfil"]').forEach(function (a) { a.hidden = !estado.usuario; }); });
+  }
+  // Botón fijo "Pedir el libro": aparece al pasar la portada.
+  var fijo = document.getElementById('pedir-fijo');
+  if (fijo) {
+    var ve = function () { fijo.hidden = scrollY < innerHeight * 0.8; };
+    addEventListener('scroll', ve, { passive: true }); ve();
+  }
   window.sesionJO.promesa = refresca();
 })();

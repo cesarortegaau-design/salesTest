@@ -6,8 +6,9 @@
 // POST /api/admin?accion=borrar-libro → { pathname } elimina un archivo de libro
 // POST /api/admin?accion=dedicar      → { correo, libro, dedicatoria, firma, guardarFirma } aprueba y dedica
 // POST /api/admin?accion=firma        → { firma } guarda la firma de Joel para reutilizarla
+import { randomInt } from 'node:crypto';
 import {
-  json, error, sesion, leeJSON, guardaJSON, listaTodo, rutaSolicitud, rutaUsuario, normalizaCorreo,
+  json, error, hashContrasena, sesion, leeJSON, guardaJSON, listaTodo, rutaSolicitud, rutaUsuario, normalizaCorreo,
   LIBROS, ajustes, RUTA_AJUSTES, AJUSTES_BASE, cuerpoJSON, del, archivoLibro, RUTA_FIRMA,
 } from './_lib/core.js';
 
@@ -48,6 +49,19 @@ export async function POST(request) {
   const accion = new URL(request.url).searchParams.get('accion');
   const b = await cuerpoJSON(request);
   const ahora = new Date().toISOString();
+
+  // Contraseña temporal para quien olvidó la suya: Joel se la comparte y la persona la cambia en Mi perfil.
+  if (accion === 'clave-temporal') {
+    const correo = normalizaCorreo(b.correo);
+    const ruta = rutaUsuario(correo);
+    const u = await leeJSON(ruta);
+    if (!u) return error('No hay ninguna cuenta con ese correo.', 404);
+    const ABC = 'abcdefghjkmnpqrstuvwxyz23456789';
+    let temporal = '';
+    for (let i = 0; i < 10; i++) temporal += ABC[randomInt(ABC.length)];
+    await guardaJSON(ruta, { ...u, ...hashContrasena(temporal), temporal: ahora });
+    return json({ correo, temporal });
+  }
 
   if (accion === 'firma') {
     if (b.firma && !firmaValida(b.firma)) return error('Firma no válida.');

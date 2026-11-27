@@ -89,6 +89,17 @@
       </div>
 
       <div class="tarjeta">
+        <h2>Contraseña temporal</h2>
+        <p>Si alguien olvidó su contraseña, genera una temporal y compártesela. Podrá cambiarla en <i>Mi perfil</i>.</p>
+        <form id="form-temporal" style="display:grid;gap:12px;max-width:520px">
+          <div><label for="t-correo">Correo de la persona</label><input id="t-correo" type="email" required></div>
+          <div><button class="btn btn--negro" type="submit">Generar contraseña temporal</button></div>
+          <p class="estado" role="status" id="t-estado"></p>
+          <div id="t-resultado" class="temporal" hidden><small>Contraseña temporal para <b id="t-para"></b></small><code id="t-clave"></code><button type="button" class="mini" id="t-copiar">Copiar</button></div>
+        </form>
+      </div>
+
+      <div class="tarjeta">
         <h2>Datos de la cooperación</h2>
         <p>Lo que ven las personas en su cuenta para hacer la transferencia.</p>
         <form id="form-ajustes" style="display:grid;gap:12px">

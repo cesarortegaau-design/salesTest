@@ -28,7 +28,11 @@ const publica = (s, hayArchivo) =>
 
 export async function GET(request) {
   const s = sesion(request);
-  if (!s) return error('Inicia sesión.', 401);
+  // La página de pedido muestra los datos de cooperación antes de crear la cuenta.
+  if (!s || s.soloAdmin) {
+    if (new URL(request.url).searchParams.has('publico')) return json({ solicitudes: {}, ajustes: await ajustes(), libros: LIBROS });
+    return error('Inicia sesión.', 401);
+  }
   const filas = await Promise.all(
     Object.keys(LIBROS).map(async (id) => {
       const [sol, arch] = await Promise.all([leeJSON(rutaSolicitud(s.correo, id)), archivoLibro(id)]);
