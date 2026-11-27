@@ -508,3 +508,4 @@ td .acciones .no{border-color:var(--rojo);color:var(--rojo)}
 .perfil-tarjeta{margin-top:30px;scroll-margin-top:90px}
 #libros{scroll-margin-top:90px}
 .barra .perfil-lista a,.barra .perfil-lista button{padding:10px 16px}
+.btn--fb svg{flex:none}
