@@ -509,3 +509,10 @@ td .acciones .no{border-color:var(--rojo);color:var(--rojo)}
 #libros{scroll-margin-top:90px}
 .barra .perfil-lista a,.barra .perfil-lista button{padding:10px 16px}
 .btn--fb svg{flex:none}
+
+/* Campo de contraseña con botón Ver */
+.pass-wrap{position:relative}
+.pass-wrap input{padding-right:92px}
+.pass-ojo{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:var(--negro);color:#fff;font:700 12px/1 var(--cond);letter-spacing:.12em;text-transform:uppercase;padding:9px 10px;cursor:pointer;min-width:74px}
+.pass-mayus{color:var(--aviso)}
+.modal{overflow:auto}

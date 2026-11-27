@@ -31,13 +31,38 @@
     if (guardado && !correoIn.value) correoIn.value = guardado;
     modal.hidden = false;
     document.body.style.overflow = 'hidden';
-    setTimeout(function () { (correoIn.value ? pass : correoIn).focus(); }, 30);
+    // Solo se enfoca el correo cuando está vacío: no se toca el campo de contraseña,
+    // para no interferir con el gestor de contraseñas del navegador.
+    if (!correoIn.value) setTimeout(function () { correoIn.focus(); }, 30);
   }
   function cierra() {
     modal.hidden = true;
     document.body.style.overflow = '';
     if (previo) previo.focus();
   }
+  // Ver/ocultar contraseña y aviso de mayúsculas
+  var envoltura = document.createElement('div');
+  envoltura.className = 'pass-wrap';
+  pass.parentNode.insertBefore(envoltura, pass);
+  envoltura.appendChild(pass);
+  var ojo = document.createElement('button');
+  ojo.type = 'button'; ojo.className = 'pass-ojo'; ojo.textContent = 'Ver';
+  ojo.setAttribute('aria-label', 'Mostrar contraseña'); ojo.setAttribute('aria-pressed', 'false');
+  envoltura.appendChild(ojo);
+  ojo.addEventListener('click', function () {
+    var ver = pass.type === 'password';
+    pass.type = ver ? 'text' : 'password';
+    ojo.textContent = ver ? 'Ocultar' : 'Ver';
+    ojo.setAttribute('aria-pressed', String(ver));
+    ojo.setAttribute('aria-label', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    pass.focus();
+  });
+  var mayus = document.createElement('p');
+  mayus.className = 'ayuda pass-mayus'; mayus.hidden = true; mayus.textContent = 'Bloq Mayús está activado.';
+  envoltura.parentNode.insertBefore(mayus, envoltura.nextSibling);
+  pass.addEventListener('keyup', function (e) { if (e.getModifierState) mayus.hidden = !e.getModifierState('CapsLock'); });
+  pass.addEventListener('input', function () { if (estado.className === 'estado') estado.textContent = ''; });
+
   function sesionActiva() { return !!(window.sesionJO && window.sesionJO.estado.usuario); }
   function irA() { return libro ? '/cuenta.html?libro=' + encodeURIComponent(libro) : '/cuenta.html'; }
 
@@ -69,8 +94,10 @@
       var r = await fetch('/api/auth?accion=' + modo, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(datos), credentials: 'same-origin' });
       var d = await r.json();
       if (!r.ok) {
-        if (r.status === 409) { ponModo('entrar'); pass.focus(); }
-        estado.textContent = d.error || 'No se pudo continuar.';
+        if (r.status === 409) ponModo('entrar');
+        estado.textContent = r.status === 401
+          ? 'Correo o contraseña incorrectos. Usa "Ver" para revisar lo que escribiste.'
+          : d.error || 'No se pudo continuar.';
         return;
       }
       recuerda(datos.correo);
